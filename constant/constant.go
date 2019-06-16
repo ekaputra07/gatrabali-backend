@@ -7,16 +7,12 @@ const (
 	TypeFeed = "FEED"
 	// TypeEntry news entry
 	TypeEntry = "ENTRY"
-)
 
-const (
 	// OpWrite is write operation on Firestore
 	OpWrite = "WRITE"
 	// OpDelete is delete operation on Firestore
 	OpDelete = "DELETE"
-)
 
-const (
 	// Categories is collection for categories
 	Categories = "categories"
 	// Feeds is collection for feed sources

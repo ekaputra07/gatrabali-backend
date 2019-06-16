@@ -1,6 +1,8 @@
 package sync
 
-import "gatrabali/model"
+import (
+	"gatrabali/model"
+)
 
 // StartCategorySync calls Miniflux categories API and store the objects to Firestore
 func StartCategorySync(payload *model.Payload) error {
