@@ -36,19 +36,63 @@ func GetCategories() (*model.CategoryList, error) {
 	}
 	defer res.Body.Close()
 
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("GetCategories() error status code: %v", res.StatusCode)
+	}
+
 	var categories model.CategoryList
 	json.NewDecoder(res.Body).Decode(&categories)
 	return &categories, nil
 }
 
-// GetIcon calls /v1/feeds/:FeedID/icon
-func GetIcon(id int64) (*model.Feed, error) {
-	return nil, nil
+// GetFeedIcon calls /v1/feeds/:FeedID/icon
+func GetFeedIcon(feedID int64) (*model.FeedIcon, error) {
+	req, err := createGetRequest(fmt.Sprintf("/v1/feeds/%v/icon", feedID))
+	if err != nil {
+		return nil, err
+	}
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("GetFeedIcon(%v) error status code: %v", feedID, res.StatusCode)
+	}
+
+	var icon model.FeedIcon
+	json.NewDecoder(res.Body).Decode(&icon)
+	return &icon, nil
 }
 
 // GetFeed calls /v1/feeds/:ID
 func GetFeed(id int64) (*model.Feed, error) {
-	return nil, nil
+	req, err := createGetRequest(fmt.Sprintf("/v1/feeds/%v", id))
+	if err != nil {
+		return nil, err
+	}
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("GetFeed(%v) error status code: %v", id, res.StatusCode)
+	}
+
+	var mFeed model.MFeed
+	json.NewDecoder(res.Body).Decode(&mFeed)
+	feed := mFeed.ToFeed()
+
+	// get feed icon, if error return feed without icon
+	icon, err := GetFeedIcon(id)
+	if err != nil {
+		return &feed, nil
+	}
+	feed.SetIcon(icon)
+	return &feed, nil
 }
 
 // GetEntry calls /v1/entries/:ID
@@ -62,6 +106,10 @@ func GetEntry(id int64) (*model.Entry, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("GetEntry(%v) error status code: %v", id, res.StatusCode)
+	}
 
 	var mEntry model.MEntry
 	json.NewDecoder(res.Body).Decode(&mEntry)

@@ -33,16 +33,22 @@ func SyncData(ctx context.Context, m PubSubMessage) error {
 
 	payload, err := m.getPayload()
 	if err != nil {
-		log.Println(err)
+		return err
 	}
+
+	firestore, err := Firestore()
+	if err != nil {
+		return err
+	}
+	defer firestore.Close()
 
 	switch *payload.Type {
 	case constant.TypeCategory:
-		return sync.StartCategorySync(payload)
+		return sync.StartCategorySync(firestore, payload)
 	case constant.TypeFeed:
-		return sync.StartFeedSync(payload)
+		return sync.StartFeedSync(firestore, payload)
 	case constant.TypeEntry:
-		return sync.StartEntrySync(payload)
+		return sync.StartEntrySync(firestore, payload)
 	}
 	return nil
 }

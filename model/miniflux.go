@@ -4,11 +4,6 @@ import (
 	"time"
 )
 
-// MIcon represents Icon on Miniflux
-type MIcon struct {
-	ID int64 `json:"id"`
-}
-
 // MFeed represents Feed on Miniflux
 type MFeed struct {
 	ID        int64    `json:"id"`
@@ -18,7 +13,6 @@ type MFeed struct {
 	Title     string   `json:"title"`
 	CheckedAt string   `json:"checked_at"`
 	Category  Category `json:"category"`
-	Icon      MIcon    `json:"icon"`
 }
 
 // ToFeed transform MFeed into Feed
