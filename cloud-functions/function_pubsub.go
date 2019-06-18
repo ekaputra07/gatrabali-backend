@@ -1,14 +1,14 @@
-package gatrabali
+package function
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/apps4bali/gatrabali-backend/common/constant"
+	"github.com/apps4bali/gatrabali-backend/common/model"
 	"log"
 
-	"gatrabali/constant"
-	"gatrabali/model"
-	"gatrabali/sync"
+	"function/sync"
 )
 
 // PubSubMessage is the payload of Pub/Sub message

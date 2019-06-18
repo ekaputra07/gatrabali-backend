@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"gatrabali/sync"
+	"function/sync"
 )
 
 // This package is not part of Cloud Function but used to test parts of the project.

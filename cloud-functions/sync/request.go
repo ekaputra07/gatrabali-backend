@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"gatrabali/model"
+	"github.com/apps4bali/gatrabali-backend/common/model"
 )
 
 // create client with default 5secs timeout

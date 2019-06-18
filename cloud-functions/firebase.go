@@ -1,4 +1,4 @@
-package gatrabali
+package function
 
 import (
 	"cloud.google.com/go/firestore"
