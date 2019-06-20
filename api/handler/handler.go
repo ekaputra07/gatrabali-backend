@@ -2,7 +2,11 @@ package handler
 
 import (
 	"fmt"
+	// "log"
+	"encoding/json"
 	"net/http"
+
+	"api/store"
 )
 
 // Index serve request to /
@@ -12,7 +16,15 @@ func Index(w http.ResponseWriter, r *http.Request) {
 
 // Feeds serve request to /api/v1/feeds
 func Feeds(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Feeds API")
+	f := []map[string]interface{}{}
+
+	feeds := store.GetFeeds()
+	if feeds != nil {
+		f = *feeds
+	}
+
+	j, _ := json.Marshal(f)
+	fmt.Fprint(w, string(j))
 }
 
 // Entries serve request to /api/v1/entries
