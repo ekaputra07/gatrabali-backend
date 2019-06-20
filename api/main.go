@@ -1,27 +1,36 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 
+	firebase "firebase.google.com/go"
 	"github.com/gorilla/mux"
-
-	"api/handler"
 )
 
+type server struct {
+	router *mux.Router
+	db     *DB
+}
+
 func main() {
-	r := mux.NewRouter()
-	r.HandleFunc("/", handler.Index)
+	ctx := context.Background()
 
-	// Api routes
-	s := r.PathPrefix("/api/v1").Subrouter()
-	s.HandleFunc("/feeds", handler.Feeds).Methods("GET")
-	s.HandleFunc("/entries", handler.Entries).Methods("GET")
-	s.HandleFunc("/categories/summary", handler.CategorySummary).Methods("GET")
+	// init the Firebase App
+	app, err := firebase.NewApp(ctx, nil)
+	if err != nil {
+		log.Fatalf("error initializing app: %v\n", err)
+	}
 
-	http.Handle("/", r)
+	// init the router
+	router := mux.NewRouter()
+
+	s := server{router, MakeDB(app)}
+
+	http.Handle("/", s.Routes())
 
 	port := os.Getenv("PORT")
 	if port == "" {
