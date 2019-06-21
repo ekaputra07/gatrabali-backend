@@ -43,6 +43,40 @@ func (s *server) HandleFeeds() http.HandlerFunc {
 	}
 }
 
+func (s *server) HandleCategorySummary() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		categories, err := s.db.GetAllCategories()
+		if err != nil {
+			s.SetServerError(w, err.Error())
+			return
+		}
+		summary := []map[string]interface{}{}
+
+		// loop through categories and get 3 latest entries on that category
+		for _, cat := range *categories {
+			entries, err := s.db.GetCategoryEntries(int(cat["id"].(float64)), 0, 3)
+			if err != nil {
+				continue
+			}
+			if len(*entries) > 0 {
+				cat["entries"] = entries
+				summary = append(summary, cat)
+			}
+		}
+
+		j, err := json.Marshal(summary)
+		if err != nil {
+			s.SetServerError(w, err.Error())
+			return
+		}
+
+		if len(summary) > 0 {
+			w = s.SetCacheControl(w, 3600)
+		}
+		fmt.Fprint(w, string(j))
+	}
+}
+
 func (s *server) HandleEntries() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()

@@ -127,3 +127,27 @@ func (db *DB) GetCategoryEntries(category, cursor, limit int) (*[]map[string]int
 	}
 	return &entries, nil
 }
+
+// GetAllCategories returns all categories on database
+func (db *DB) GetAllCategories() (*[]map[string]interface{}, error) {
+	client, err := db.app.Firestore(db.ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
+
+	iter := client.Collection(constant.Categories).Documents(db.ctx)
+	categories := []map[string]interface{}{}
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		categories = append(categories, doc.Data())
+	}
+	return &categories, nil
+}
