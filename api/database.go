@@ -42,7 +42,7 @@ func (db *DB) GetFeeds() (*[]map[string]interface{}, error) {
 			continue
 		}
 		data := doc.Data()
-		feeds = append(feeds, map[string]interface{}{"id": data["id"], "name": data["title"]})
+		feeds = append(feeds, map[string]interface{}{"id": data["id"], "title": data["title"]})
 	}
 	return &feeds, nil
 }
