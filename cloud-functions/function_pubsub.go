@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log"
+
 	"github.com/apps4bali/gatrabali-backend/common/constant"
 	"github.com/apps4bali/gatrabali-backend/common/model"
-	"log"
 
 	"function/sync"
 )
@@ -16,24 +17,16 @@ type PubSubMessage struct {
 	Data []byte `json:"data"`
 }
 
-func (m *PubSubMessage) getPayload() (*model.Payload, error) {
-	var payload model.Payload
-	if err := json.Unmarshal(m.Data, &payload); err != nil {
-		return nil, err
-	}
-	if payload.ID == nil || payload.Type == nil || payload.Op == nil {
-		return nil, errors.New("Invalid message payload (missing id, type or op)")
-	}
-	return &payload, nil
-}
-
 // SyncData calls Miniflux API and store its response to Cloud Firestore
 func SyncData(ctx context.Context, m PubSubMessage) error {
 	log.Printf("SyncData triggered with payload: %v\n", string(m.Data))
 
-	payload, err := m.getPayload()
-	if err != nil {
+	var payload model.Payload
+	if err := json.Unmarshal(m.Data, &payload); err != nil {
 		return err
+	}
+	if payload.ID == nil || payload.Type == nil || payload.Op == nil {
+		return errors.New("Invalid message payload (missing id, type or op)")
 	}
 
 	firestore, err := Firestore()
@@ -44,11 +37,17 @@ func SyncData(ctx context.Context, m PubSubMessage) error {
 
 	switch *payload.Type {
 	case constant.TypeCategory:
-		return sync.StartCategorySync(firestore, payload)
+		return sync.StartCategorySync(ctx, firestore, &payload)
 	case constant.TypeFeed:
-		return sync.StartFeedSync(firestore, payload)
+		return sync.StartFeedSync(ctx, firestore, &payload)
 	case constant.TypeEntry:
-		return sync.StartEntrySync(firestore, payload)
+		return sync.StartEntrySync(ctx, firestore, &payload)
 	}
+	return nil
+}
+
+// SendPushNotification send push notification using FCM.
+func SendPushNotification(ctx context.Context, m PubSubMessage) error {
+	log.Printf("SendPushNotification triggered with payload: %v\n", string(m.Data))
 	return nil
 }

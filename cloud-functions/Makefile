@@ -12,3 +12,4 @@ deploy_http:
 
 deploy_pubsub:
 	gcloud functions deploy SyncData --runtime=go111 --trigger-topic=SyncData --env-vars-file=env.yaml
+	gcloud functions deploy SendPushNotification --runtime=go111 --trigger-topic=PushNotification
