@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 func (s *server) SetCacheControl(w http.ResponseWriter, maxAge int) http.ResponseWriter {
@@ -122,5 +124,26 @@ func (s *server) HandleEntries() http.HandlerFunc {
 			}
 			fmt.Fprint(w, string(j))
 		}
+	}
+}
+
+func (s *server) HandleEntry() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		entryID, _ := strconv.Atoi(vars["entryID"])
+		entry, err := s.db.GetEntry(entryID)
+		if err != nil {
+			s.SetServerError(w, err.Error())
+			return
+		}
+
+		j, err := json.Marshal(entry)
+		if err != nil {
+			s.SetServerError(w, err.Error())
+			return
+		}
+
+		w = s.SetCacheControl(w, 3600)
+		fmt.Fprint(w, string(j))
 	}
 }

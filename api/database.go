@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"strconv"
 
 	"cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go"
@@ -45,6 +46,22 @@ func (db *DB) GetFeeds() (*[]map[string]interface{}, error) {
 		feeds = append(feeds, map[string]interface{}{"id": data["id"], "title": data["title"]})
 	}
 	return &feeds, nil
+}
+
+// GetEntry returns single entry
+func (db *DB) GetEntry(id int) (*map[string]interface{}, error) {
+	client, err := db.app.Firestore(db.ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
+
+	doc, err := client.Collection(constant.Entries).Doc(strconv.Itoa(id)).Get(db.ctx)
+	if err != nil {
+		return nil, err
+	}
+	data := doc.Data()
+	return &data, nil
 }
 
 // GetAllEntries returns paginated entries

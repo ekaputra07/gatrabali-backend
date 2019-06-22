@@ -12,6 +12,7 @@ func (s *server) Routes() *mux.Router {
 	api := s.router.PathPrefix("/api/v1").Subrouter()
 	api.HandleFunc("/feeds", s.HandleFeeds())
 	api.HandleFunc("/entries", s.HandleEntries())
+	api.HandleFunc("/entries/{entryID}", s.HandleEntry())
 	api.HandleFunc("/categories/summary", s.HandleCategorySummary())
 
 	return s.router
