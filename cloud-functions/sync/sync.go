@@ -12,7 +12,7 @@ import (
 )
 
 // StartCategorySync calls Miniflux categories API and store the objects to Firestore
-func StartCategorySync(ctx context.Context, store *firestore.Client, payload *model.Payload) error {
+func StartCategorySync(ctx context.Context, store *firestore.Client, payload *model.SyncPayload) error {
 	if *payload.Op == constant.OpWrite {
 		categories, err := GetCategories()
 		if err != nil {
@@ -36,7 +36,7 @@ func StartCategorySync(ctx context.Context, store *firestore.Client, payload *mo
 }
 
 // StartFeedSync calls Miniflux feeds API and store the object to Firestore
-func StartFeedSync(ctx context.Context, store *firestore.Client, payload *model.Payload) error {
+func StartFeedSync(ctx context.Context, store *firestore.Client, payload *model.SyncPayload) error {
 	if *payload.Op == constant.OpWrite {
 		feed, err := GetFeed(*payload.ID)
 		if err != nil {
@@ -53,7 +53,7 @@ func StartFeedSync(ctx context.Context, store *firestore.Client, payload *model.
 }
 
 // StartEntrySync calls Miniflux entries API and store the object to Firestore
-func StartEntrySync(ctx context.Context, store *firestore.Client, payload *model.Payload) error {
+func StartEntrySync(ctx context.Context, store *firestore.Client, payload *model.SyncPayload) error {
 	if *payload.Op == constant.OpWrite {
 		entry, err := GetEntry(*payload.ID)
 		if err != nil {
