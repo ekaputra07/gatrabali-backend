@@ -56,7 +56,7 @@ func (s *server) HandleCategorySummary() http.HandlerFunc {
 
 		// loop through categories and get 3 latest entries on that category
 		for _, cat := range *categories {
-			entries, err := s.db.GetCategoryEntries(int(cat["id"].(float64)), 0, 3)
+			entries, err := s.db.GetCategoryEntries(int(cat["id"].(int64)), 0, 3)
 			if err != nil {
 				continue
 			}
