@@ -1,10 +1,11 @@
 package sync
 
 import (
-	"cloud.google.com/go/firestore"
 	"context"
 	"fmt"
 	"strconv"
+
+	"cloud.google.com/go/firestore"
 
 	"github.com/apps4bali/gatrabali-backend/common/constant"
 	"github.com/apps4bali/gatrabali-backend/common/model"
@@ -24,10 +25,7 @@ func StartCategorySync(store *firestore.Client, payload *model.Payload) error {
 		batch := store.Batch()
 		for _, cat := range *categories {
 			docRef := store.Collection(constant.Categories).Doc(strconv.FormatInt(cat.ID, 10))
-			m, err := cat.ToMap()
-			if err == nil {
-				batch.Set(docRef, m)
-			}
+			batch.Set(docRef, cat)
 		}
 		_, err = batch.Commit(ctx)
 		return err
@@ -48,11 +46,7 @@ func StartFeedSync(store *firestore.Client, payload *model.Payload) error {
 		if err != nil {
 			return err
 		}
-		m, err := feed.ToMap()
-		if err != nil {
-			return err
-		}
-		_, err = store.Collection(constant.Feeds).Doc(strconv.FormatInt(*payload.ID, 10)).Set(ctx, m)
+		_, err = store.Collection(constant.Feeds).Doc(strconv.FormatInt(*payload.ID, 10)).Set(ctx, feed)
 		return err
 
 	} else if *payload.Op == constant.OpDelete {
@@ -71,11 +65,7 @@ func StartEntrySync(store *firestore.Client, payload *model.Payload) error {
 		if err != nil {
 			return err
 		}
-		m, err := entry.ToMap()
-		if err != nil {
-			return err
-		}
-		_, err = store.Collection(constant.Entries).Doc(strconv.FormatInt(*payload.ID, 10)).Set(ctx, m)
+		_, err = store.Collection(constant.Entries).Doc(strconv.FormatInt(*payload.ID, 10)).Set(ctx, entry)
 		return err
 
 	} else if *payload.Op == constant.OpDelete {

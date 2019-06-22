@@ -34,7 +34,6 @@ type MEntry struct {
 	ID          int64        `json:"id"`
 	UserID      int64        `json:"user_id"`
 	FeedID      int64        `json:"feed_id"`
-	Hash        string       `json:"hash"`
 	Title       string       `json:"title"`
 	URL         string       `json:"url"`
 	Content     string       `json:"content"`
@@ -51,7 +50,6 @@ func (me *MEntry) ToEntry() (entry Entry) {
 		ID:          me.ID,
 		UserID:      me.UserID,
 		FeedID:      me.FeedID,
-		Hash:        me.Hash,
 		Title:       me.Title,
 		URL:         me.URL,
 		Content:     me.Content,
