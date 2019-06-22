@@ -3,9 +3,11 @@ cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMT
 cloud.google.com/go v0.38.0/go.mod h1:990N+gfupTy94rShfmMCWGDn0LpTmnzTp2qbd1dvSRU=
 cloud.google.com/go v0.40.0 h1:FjSY7bOj+WzJe6TZRVtXI2b9kAYvtNg4lMbcH2+MUkk=
 cloud.google.com/go v0.40.0/go.mod h1:Tk58MuI9rbLMKlAjeO/bDnteAx7tX2gJIXw4T5Jwlro=
+firebase.google.com/go v3.8.1+incompatible h1:A/KMJdcsLq1/miil8tONEbLBmUgOWpdVCLAxMHq0Xbw=
+firebase.google.com/go v3.8.1+incompatible/go.mod h1:xlah6XbEyW6tbfSklcfe5FHJIwjt8toICdV5Wh9ptHs=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/apps4bali/gatrabali-backend v0.0.0-20190622142951-c2121afd29bd h1:ZF/sPWJj+Z0LWCAFCfXccQMULzjjbzDlmDk1VNyvKTo=
-github.com/apps4bali/gatrabali-backend v0.0.0-20190622142951-c2121afd29bd/go.mod h1:Pz7G9m8+W2+D4mEhH72vNub0z4JQkJQ+ZtJOIJwU0yM=
+github.com/apps4bali/gatrabali-backend v0.0.0-20190622153640-50ec6280b68d h1:amqbmFQVzoXaqgx2JF2R0d0a2SvuUihi3UM/ATnYURA=
+github.com/apps4bali/gatrabali-backend v0.0.0-20190622153640-50ec6280b68d/go.mod h1:Pz7G9m8+W2+D4mEhH72vNub0z4JQkJQ+ZtJOIJwU0yM=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b h1:VKtxabqXZkF25pY9ekfRL6a582T4P37/31XEstQ5p58=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=

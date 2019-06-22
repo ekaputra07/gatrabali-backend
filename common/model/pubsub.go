@@ -8,10 +8,8 @@ type SyncPayload struct {
 }
 
 // PushNotificationPayload is the payload to send push notification.
-// Title and Meta can be omitted but Message is mandatory.
 type PushNotificationPayload struct {
-	UserID  *string
-	Title   *string
-	Message *string
-	Meta    *map[string]interface{}
+	UserID string `json:"user_id"`
+	Title  string `json:"title"`
+	Body   string `json:"body"`
 }
