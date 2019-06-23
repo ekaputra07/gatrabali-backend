@@ -59,7 +59,7 @@ func SendPushNotification(ctx context.Context, m PubSubMessage) error {
 		return err
 	}
 	if payload.Title == "" || payload.Body == "" || payload.UserID == "" {
-		return errors.New("Invalid message payload: missing user_id, title, body")
+		return errors.New("Invalid message payload: missing user_id, title or body")
 	}
 
 	// get user's FCM tokens
@@ -69,7 +69,7 @@ func SendPushNotification(ctx context.Context, m PubSubMessage) error {
 	}
 	defer fclient.Close()
 
-	doc, err := fclient.Collection("users").Doc(*payload.UserID).Get(ctx)
+	doc, err := fclient.Collection("users").Doc(payload.UserID).Get(ctx)
 	if err != nil {
 		return err
 	}
@@ -79,14 +79,14 @@ func SendPushNotification(ctx context.Context, m PubSubMessage) error {
 		log.Printf("User %v doesn't have FCM tokens", payload.UserID)
 		return nil
 	}
-	tokensMap := tokens.(map[string]bool) // convert to map
+	tokensMap := tokens.(map[string]interface{}) // convert to map
 	if len(tokensMap) == 0 {
 		log.Printf("User %v doesn't have FCM tokens", payload.UserID)
 		return nil
 	}
 
 	// build notification message
-	client, err := messaging.NewClient(ctx, nil)
+	client, err := MessagingClient(ctx)
 	if err != nil {
 		return err
 	}
@@ -107,15 +107,13 @@ func SendPushNotification(ctx context.Context, m PubSubMessage) error {
 			// if error, delete token
 			log.Printf("Notification not sent: %v\n", err)
 			delete(tokensMap, token)
+		} else {
+			log.Printf("Notification sent: %v\n", resp)
 		}
-		log.Printf("Notification sent: %v\n", resp)
 	}
 
 	// store back the remaining tokens to user document
-	_, err = fclient.Collection("users").
-		Doc(*payload.UserID).
-		Set(ctx, map[string]interface{}{"fcm_tokens": tokensMap}, firestore.MergeAll)
-
+	_, err = fclient.Collection("users").Doc(payload.UserID).Update(ctx, []firestore.Update{{Path: "fcm_tokens", Value: tokensMap}})
 	if err != nil {
 		log.Printf("Error saving fcm_tokens back to user doc: %v", err)
 	}
