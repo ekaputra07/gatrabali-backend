@@ -11,8 +11,14 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// ContextKey used to Set and Get a context value
+type ContextKey string
+
+const userCtxKey ContextKey = "user"
+
 type server struct {
 	router *mux.Router
+	app    *firebase.App
 	db     *DB
 }
 
@@ -28,7 +34,7 @@ func main() {
 	// init the router
 	router := mux.NewRouter()
 
-	s := server{router, MakeDB(app)}
+	s := server{router, app, MakeDB(app)}
 
 	http.Handle("/", s.Routes())
 

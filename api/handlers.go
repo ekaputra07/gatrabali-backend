@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
 
+	goctx "github.com/gorilla/context"
 	"github.com/gorilla/mux"
 )
 
@@ -26,7 +28,7 @@ func (s *server) HandleIndex() http.HandlerFunc {
 
 func (s *server) HandleFeeds() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		feeds, err := s.db.GetFeeds()
+		feeds, err := s.db.GetFeeds(context.Background())
 		if err != nil {
 			s.SetServerError(w, err.Error())
 			return
@@ -47,7 +49,7 @@ func (s *server) HandleFeeds() http.HandlerFunc {
 
 func (s *server) HandleCategorySummary() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		categories, err := s.db.GetAllCategories()
+		categories, err := s.db.GetAllCategories(context.Background())
 		if err != nil {
 			s.SetServerError(w, err.Error())
 			return
@@ -56,7 +58,7 @@ func (s *server) HandleCategorySummary() http.HandlerFunc {
 
 		// loop through categories and get 3 latest entries on that category
 		for _, cat := range *categories {
-			entries, err := s.db.GetCategoryEntries(int(cat["id"].(int64)), 0, 3)
+			entries, err := s.db.GetCategoryEntries(context.Background(), int(cat["id"].(int64)), 0, 3)
 			if err != nil {
 				continue
 			}
@@ -88,7 +90,7 @@ func (s *server) HandleEntries() http.HandlerFunc {
 
 		if cat == 0 {
 			// Returns latest entries
-			entries, err := s.db.GetAllEntries(cur, lim)
+			entries, err := s.db.GetAllEntries(context.Background(), cur, lim)
 			if err != nil {
 				s.SetServerError(w, err.Error())
 				return
@@ -107,7 +109,7 @@ func (s *server) HandleEntries() http.HandlerFunc {
 
 		} else {
 			// Returns latest entries in category
-			entries, err := s.db.GetCategoryEntries(cat, cur, lim)
+			entries, err := s.db.GetCategoryEntries(context.Background(), cat, cur, lim)
 			if err != nil {
 				s.SetServerError(w, err.Error())
 				return
@@ -118,9 +120,13 @@ func (s *server) HandleEntries() http.HandlerFunc {
 				return
 			}
 
-			// cache if not empty
+			// cache 1hr if not empty, if there's user object in request context then only cache for 1 min
 			if len(*entries) > 0 {
-				w = s.SetCacheControl(w, 3600)
+				if goctx.Get(r, userCtxKey) != nil {
+					w = s.SetCacheControl(w, 60)
+				} else {
+					w = s.SetCacheControl(w, 3600)
+				}
 			}
 			fmt.Fprint(w, string(j))
 		}
@@ -131,7 +137,7 @@ func (s *server) HandleEntry() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		entryID, _ := strconv.Atoi(vars["entryID"])
-		entry, err := s.db.GetEntry(entryID)
+		entry, err := s.db.GetEntry(context.Background(), entryID)
 		if err != nil {
 			s.SetServerError(w, err.Error())
 			return

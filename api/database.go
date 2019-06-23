@@ -15,23 +15,22 @@ import (
 // DB is represents the datastore, in this case its Firebase
 type DB struct {
 	app *firebase.App
-	ctx context.Context
 }
 
 // MakeDB returns instance of DB
 func MakeDB(app *firebase.App) *DB {
-	return &DB{app, context.Background()}
+	return &DB{app}
 }
 
 // GetFeeds returns all feeds
-func (db *DB) GetFeeds() (*[]map[string]interface{}, error) {
-	client, err := db.app.Firestore(db.ctx)
+func (db *DB) GetFeeds(ctx context.Context) (*[]map[string]interface{}, error) {
+	client, err := db.app.Firestore(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer client.Close()
 
-	iter := client.Collection(constant.Feeds).Documents(db.ctx)
+	iter := client.Collection(constant.Feeds).Documents(ctx)
 	feeds := []map[string]interface{}{}
 	for {
 		doc, err := iter.Next()
@@ -49,14 +48,14 @@ func (db *DB) GetFeeds() (*[]map[string]interface{}, error) {
 }
 
 // GetEntry returns single entry
-func (db *DB) GetEntry(id int) (*map[string]interface{}, error) {
-	client, err := db.app.Firestore(db.ctx)
+func (db *DB) GetEntry(ctx context.Context, id int) (*map[string]interface{}, error) {
+	client, err := db.app.Firestore(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer client.Close()
 
-	doc, err := client.Collection(constant.Entries).Doc(strconv.Itoa(id)).Get(db.ctx)
+	doc, err := client.Collection(constant.Entries).Doc(strconv.Itoa(id)).Get(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -65,8 +64,8 @@ func (db *DB) GetEntry(id int) (*map[string]interface{}, error) {
 }
 
 // GetAllEntries returns paginated entries
-func (db *DB) GetAllEntries(cursor, limit int) (*[]map[string]interface{}, error) {
-	client, err := db.app.Firestore(db.ctx)
+func (db *DB) GetAllEntries(ctx context.Context, cursor, limit int) (*[]map[string]interface{}, error) {
+	client, err := db.app.Firestore(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +87,7 @@ func (db *DB) GetAllEntries(cursor, limit int) (*[]map[string]interface{}, error
 		query = query.StartAfter(cursor)
 	}
 
-	iter := query.Documents(db.ctx)
+	iter := query.Documents(ctx)
 	entries := []map[string]interface{}{}
 	for {
 		doc, err := iter.Next()
@@ -105,8 +104,8 @@ func (db *DB) GetAllEntries(cursor, limit int) (*[]map[string]interface{}, error
 }
 
 // GetCategoryEntries returns paginated entries in a category
-func (db *DB) GetCategoryEntries(category, cursor, limit int) (*[]map[string]interface{}, error) {
-	client, err := db.app.Firestore(db.ctx)
+func (db *DB) GetCategoryEntries(ctx context.Context, category, cursor, limit int) (*[]map[string]interface{}, error) {
+	client, err := db.app.Firestore(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +128,7 @@ func (db *DB) GetCategoryEntries(category, cursor, limit int) (*[]map[string]int
 		query = query.StartAfter(cursor)
 	}
 
-	iter := query.Documents(db.ctx)
+	iter := query.Documents(ctx)
 	entries := []map[string]interface{}{}
 	for {
 		doc, err := iter.Next()
@@ -146,14 +145,14 @@ func (db *DB) GetCategoryEntries(category, cursor, limit int) (*[]map[string]int
 }
 
 // GetAllCategories returns all categories on database
-func (db *DB) GetAllCategories() (*[]map[string]interface{}, error) {
-	client, err := db.app.Firestore(db.ctx)
+func (db *DB) GetAllCategories(ctx context.Context) (*[]map[string]interface{}, error) {
+	client, err := db.app.Firestore(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer client.Close()
 
-	iter := client.Collection(constant.Categories).OrderBy("title", firestore.Asc).Documents(db.ctx)
+	iter := client.Collection(constant.Categories).OrderBy("title", firestore.Asc).Documents(ctx)
 	categories := []map[string]interface{}{}
 	for {
 		doc, err := iter.Next()

@@ -14,6 +14,7 @@ func (s *server) Routes() *mux.Router {
 	api.HandleFunc("/entries", s.HandleEntries())
 	api.HandleFunc("/entries/{entryID}", s.HandleEntry())
 	api.HandleFunc("/categories/summary", s.HandleCategorySummary())
+	api.Use(s.BasicUserCheck)
 
 	return s.router
 }
