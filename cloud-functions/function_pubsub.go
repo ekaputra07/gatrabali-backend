@@ -96,12 +96,22 @@ func SendPushNotification(ctx context.Context, m PubSubMessage) error {
 		Body:  payload.Body,
 	}
 
+	// create platform configs if CollapseKey provided
+	var androidConfig *messaging.AndroidConfig
+	if payload.CollapseKey != "" {
+		androidConfig = &messaging.AndroidConfig{CollapseKey: payload.CollapseKey}
+	}
+
 	// loop through tokens and send the notification
 	for token := range tokensMap {
 		message := &messaging.Message{
 			Notification: notification,
 			Token:        token,
 		}
+		if androidConfig != nil {
+			message.Android = androidConfig
+		}
+
 		resp, err := client.Send(ctx, message)
 		if err != nil {
 			// if error, delete token
