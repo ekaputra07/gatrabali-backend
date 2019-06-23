@@ -153,7 +153,7 @@ func (db *DB) GetAllCategories() (*[]map[string]interface{}, error) {
 	}
 	defer client.Close()
 
-	iter := client.Collection(constant.Categories).Documents(db.ctx)
+	iter := client.Collection(constant.Categories).OrderBy("title", firestore.Asc).Documents(db.ctx)
 	categories := []map[string]interface{}{}
 	for {
 		doc, err := iter.Next()
