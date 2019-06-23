@@ -32,7 +32,7 @@ func SyncData(ctx context.Context, m PubSubMessage) error {
 		return errors.New("Invalid message payload: missing id, type or op")
 	}
 
-	firestore, err := Firestore()
+	firestore, err := firebaseApp.FirestoreClient(ctx)
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func SendPushNotification(ctx context.Context, m PubSubMessage) error {
 	}
 
 	// get user's FCM tokens
-	fclient, err := Firestore()
+	fclient, err := firebaseApp.FirestoreClient(ctx)
 	if err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ func SendPushNotification(ctx context.Context, m PubSubMessage) error {
 	}
 
 	// build notification message
-	client, err := MessagingClient(ctx)
+	client, err := firebaseApp.MessagingClient(ctx)
 	if err != nil {
 		return err
 	}
