@@ -9,7 +9,8 @@ type SyncPayload struct {
 
 // PushNotificationPayload is the payload to send push notification.
 type PushNotificationPayload struct {
-	UserID string `json:"user_id"`
-	Title  string `json:"title"`
-	Body   string `json:"body"`
+	UserID      string `json:"user_id"`
+	Title       string `json:"title"`
+	Body        string `json:"body"`
+	CollapseKey string `json:"collapse_key,omitempty"`
 }
