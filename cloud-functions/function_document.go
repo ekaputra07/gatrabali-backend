@@ -69,6 +69,7 @@ func NotifyCategorySubscribers(ctx context.Context, e FirestoreEvent) error {
 	if err != nil {
 		return nil
 	}
+	defer pubsubClient.Close()
 	pushTopic := pubsubClient.Topic("PushNotification")
 
 	// get subscribers
@@ -87,7 +88,10 @@ func NotifyCategorySubscribers(ctx context.Context, e FirestoreEvent) error {
 
 		j, _ := json.Marshal(pushData)
 		pubsubMsg := &pubsub.Message{Data: j}
-		pushTopic.Publish(ctx, pubsubMsg)
+		_, err = pushTopic.Publish(ctx, pubsubMsg).Get(ctx)
+		if err != nil {
+			fmt.Printf("Publish to Topic failed: %s", err)
+		}
 	}
 	return nil
 }
