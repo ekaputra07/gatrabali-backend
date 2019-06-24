@@ -1,6 +1,8 @@
 package model
 
 import (
+	"errors"
+	"strings"
 	"time"
 )
 
@@ -45,8 +47,16 @@ type MEntry struct {
 }
 
 // ToEntry transform MEntry into Entry
-func (me *MEntry) ToEntry() (entry Entry) {
-	entry = Entry{
+func (me *MEntry) ToEntry() (*Entry, error) {
+
+	// Return error if enclosure is not an image
+	if me.Enclosures != nil && len(*me.Enclosures) > 0 {
+		if !strings.Contains((*me.Enclosures)[0].MimeType, "image") {
+			return nil, errors.New("Enclosure is not an image")
+		}
+	}
+
+	entry := Entry{
 		ID:          me.ID,
 		UserID:      me.UserID,
 		FeedID:      me.FeedID,
@@ -63,5 +73,6 @@ func (me *MEntry) ToEntry() (entry Entry) {
 
 	// set categories
 	entry.Categories = []int64{me.Feed.Category.ID}
-	return
+
+	return &entry, nil
 }

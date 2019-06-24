@@ -114,6 +114,9 @@ func GetEntry(id int64) (*model.Entry, error) {
 	var mEntry model.MEntry
 	json.NewDecoder(res.Body).Decode(&mEntry)
 
-	entry := mEntry.ToEntry()
-	return &entry, nil
+	entry, err := mEntry.ToEntry()
+	if err != nil {
+		return nil, err
+	}
+	return entry, nil
 }
