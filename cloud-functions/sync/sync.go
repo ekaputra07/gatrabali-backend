@@ -16,7 +16,8 @@ func StartCategorySync(ctx context.Context, store *firestore.Client, payload *mo
 	if *payload.Op == constant.OpWrite {
 		categories, err := GetCategories()
 		if err != nil {
-			return err
+			fmt.Printf("StartCategorySync failed: %s", err)
+			return nil
 		}
 
 		// write in batch
@@ -40,7 +41,8 @@ func StartFeedSync(ctx context.Context, store *firestore.Client, payload *model.
 	if *payload.Op == constant.OpWrite {
 		feed, err := GetFeed(*payload.ID)
 		if err != nil {
-			return err
+			fmt.Printf("StartFeedSync failed: %s", err)
+			return nil
 		}
 		_, err = store.Collection(constant.Feeds).Doc(strconv.FormatInt(*payload.ID, 10)).Set(ctx, feed)
 		return err
@@ -57,7 +59,8 @@ func StartEntrySync(ctx context.Context, store *firestore.Client, payload *model
 	if *payload.Op == constant.OpWrite {
 		entry, err := GetEntry(*payload.ID)
 		if err != nil {
-			return err
+			fmt.Printf("StartEntrySync failed: %s", err)
+			return nil
 		}
 		_, err = store.Collection(constant.Entries).Doc(strconv.FormatInt(*payload.ID, 10)).Set(ctx, entry)
 		return err

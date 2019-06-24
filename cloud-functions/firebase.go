@@ -2,8 +2,10 @@ package function
 
 import (
 	"context"
+	"os"
 
 	"cloud.google.com/go/firestore"
+	"cloud.google.com/go/pubsub"
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/messaging"
 )
@@ -29,6 +31,15 @@ func (f *Firebase) FirestoreClient(ctx context.Context) (*firestore.Client, erro
 // MessagingClient returns FCM client instance
 func (f *Firebase) MessagingClient(ctx context.Context) (*messaging.Client, error) {
 	client, err := f.app.Messaging(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
+}
+
+// PubSubClient return new instance of Pub/Sub client
+func (f *Firebase) PubSubClient(ctx context.Context) (*pubsub.Client, error) {
+	client, err := pubsub.NewClient(ctx, os.Getenv("GCP_PROJECT"))
 	if err != nil {
 		return nil, err
 	}
