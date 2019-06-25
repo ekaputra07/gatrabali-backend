@@ -49,11 +49,13 @@ type MEntry struct {
 // ToEntry transform MEntry into Entry
 func (me *MEntry) ToEntry() (*Entry, error) {
 
+	// return error if enclosure nil
+	if me.Enclosures == nil || (me.Enclosures != nil && len(*me.Enclosures) == 0) {
+		return nil, errors.New("Entry doesn't have enclosure")
+	}
 	// Return error if enclosure is not an image
-	if me.Enclosures != nil && len(*me.Enclosures) > 0 {
-		if !strings.Contains((*me.Enclosures)[0].MimeType, "image") {
-			return nil, errors.New("Enclosure is not an image")
-		}
+	if !strings.Contains((*me.Enclosures)[0].MimeType, "image") {
+		return nil, errors.New("Enclosure is not an image")
 	}
 
 	entry := Entry{
