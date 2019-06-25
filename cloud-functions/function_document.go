@@ -9,71 +9,92 @@ import (
 	"cloud.google.com/go/pubsub"
 	"google.golang.org/api/iterator"
 
+	"github.com/apps4bali/gatrabali-backend/common/constant"
 	"github.com/apps4bali/gatrabali-backend/common/model"
 )
 
-// FirestoreEvent is the payload of a Firestore event.
-type FirestoreEvent struct {
-	OldValue   FirestoreValue `json:"oldValue"`
-	Value      FirestoreValue `json:"value"`
+// EntryEvent is the payload of a Firestore event.
+type EntryEvent struct {
+	OldValue   EntryValue `json:"oldValue"`
+	Value      EntryValue `json:"value"`
 	UpdateMask struct {
 		FieldPaths []string `json:"fieldPaths"`
 	} `json:"updateMask"`
 }
 
-// FirestoreValue holds Firestore fields.
-type FirestoreValue struct {
-	CreateTime time.Time `json:"createTime"`
-	// Fields is the data for this value. The type depends on the format of your
-	// database. Log an interface{} value and inspect the result to see a JSON
-	// representation of your database fields.
-	Fields     model.Entry `json:"fields"`
+// EntryValue is the values in Firestore event.
+type EntryValue struct {
+	CreateTime time.Time   `json:"createTime"`
+	Fields     EntryFields `json:"fields"`
 	Name       string      `json:"name"`
 	UpdateTime time.Time   `json:"updateTime"`
 }
 
+// EntryFields is the entry fields itself, we only need id, title and categories here.
+type EntryFields struct {
+	ID struct {
+		Value string `json:"integerValue"`
+	} `json:"id"`
+	Title struct {
+		Value string `json:"stringValue"`
+	} `json:"title"`
+
+	// categories:map[arrayValue:map[values:[map[integerValue:6]]]]
+	Categories struct {
+		Value struct {
+			Values []struct {
+				Value string `json:"integerValue"`
+			} `json:"values"`
+		} `json:"arrayValue"`
+	} `json:"categories"`
+}
+
 // NotifyCategorySubscribers triggered when new entry written to Firestore,
 // get the list of the subscribers for the category of this entry and send a message to PushNotification topic.
-func NotifyCategorySubscribers(ctx context.Context, e FirestoreEvent) error {
+func NotifyCategorySubscribers(ctx context.Context, e EntryEvent) error {
+
+	fmt.Printf("NotifyCategorySubscribers triggered by entry=%v, with categories=%v\n",
+		e.Value.Fields.ID.Value, e.Value.Fields.Categories.Value)
+
 	client, err := firebaseApp.FirestoreClient(ctx)
 	if err != nil {
 		return err
 	}
 	defer client.Close()
 
-	fmt.Printf("NotifyCategorySubscribers triggered by entry=%v, with categories=%v", e.Value.Fields.ID, e.Value.Fields.Categories)
-	categories := e.Value.Fields.Categories
+	entryTitle := e.Value.Fields.Title.Value
+	categories := e.Value.Fields.Categories.Value.Values
 	// if categories set, do nothing
 	if len(categories) == 0 {
 		return nil
 	}
 
-	categoryID := categories[0]
+	categoryID := categories[0].Value
 
 	// Get the category
-	doc, err := client.Doc(fmt.Sprintf("/categories/%v", categoryID)).Get(ctx)
+	doc, err := client.Collection(constant.Categories).Doc(fmt.Sprintf("%v", categoryID)).Get(ctx)
 	if err != nil {
-		fmt.Printf("Category with ID=%v does not exists", categoryID)
+		fmt.Printf("Category with ID=%v does not exists\n", categoryID)
 		return nil
 	}
 	category := doc.Data()
 
-	// create message to publish to PushNotification topic.
-	pushData := model.PushNotificationPayload{
-		Title: fmt.Sprintf("Berita terbaru di %v", category["title"]),
-		Body:  e.Value.Fields.Title,
-	}
-
 	// create PubSub client
 	pubsubClient, err := firebaseApp.PubSubClient(ctx)
 	if err != nil {
-		return nil
+		return err
 	}
 	defer pubsubClient.Close()
 	pushTopic := pubsubClient.Topic("PushNotification")
 
+	// create message to publish to PushNotification topic.
+	pushData := model.PushNotificationPayload{
+		Title: fmt.Sprintf("Berita terbaru di %v", category["title"]),
+		Body:  entryTitle,
+	}
+
 	// get subscribers
-	iter := client.Collection(fmt.Sprintf("/categories/%v/subscribers", categoryID)).Documents(ctx)
+	iter := client.Collection(fmt.Sprintf("categories/%v/subscribers", categoryID)).Documents(ctx)
 	for {
 		doc, err := iter.Next()
 		if err == iterator.Done {
@@ -84,13 +105,17 @@ func NotifyCategorySubscribers(ctx context.Context, e FirestoreEvent) error {
 			continue
 		}
 		subscriber := doc.Data()
-		pushData.UserID = fmt.Sprintf("%v", subscriber["user_id"]) // set the UserID
+
+		// set recipient
+		pushData.UserID = fmt.Sprintf("%v", subscriber["user_id"])
 
 		j, _ := json.Marshal(pushData)
 		pubsubMsg := &pubsub.Message{Data: j}
-		_, err = pushTopic.Publish(ctx, pubsubMsg).Get(ctx)
+		serverID, err := pushTopic.Publish(ctx, pubsubMsg).Get(ctx)
 		if err != nil {
-			fmt.Printf("Publish to Topic failed: %s", err)
+			fmt.Printf("Publish to Topic failed: %s\n", err)
+		} else {
+			fmt.Printf("Publish to Topic success: %s\n", serverID)
 		}
 	}
 	return nil
