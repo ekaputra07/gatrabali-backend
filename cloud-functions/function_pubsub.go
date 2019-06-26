@@ -105,6 +105,7 @@ func SendPushNotification(ctx context.Context, m PubSubMessage) error {
 	// loop through tokens and send the notification
 	for token := range tokensMap {
 		message := &messaging.Message{
+			Data:         payload.Data,
 			Notification: notification,
 			Token:        token,
 		}

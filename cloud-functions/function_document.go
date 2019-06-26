@@ -91,6 +91,7 @@ func NotifyCategorySubscribers(ctx context.Context, e EntryEvent) error {
 	pushData := model.PushNotificationPayload{
 		Title: fmt.Sprintf("Gatra %v", category["title"]),
 		Body:  entryTitle,
+		Data:  map[string]string{"uri": fmt.Sprintf("gatrabali://entries/%v", e.Value.Fields.ID.Value)},
 	}
 
 	// get subscribers
