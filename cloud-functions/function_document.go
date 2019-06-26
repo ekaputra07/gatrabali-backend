@@ -38,7 +38,12 @@ type EntryFields struct {
 	Title struct {
 		Value string `json:"stringValue"`
 	} `json:"title"`
-
+	FeedID struct {
+		Value string `json:"integerValue"`
+	} `json:"feed_id"`
+	PublishedAt struct {
+		Value string `json:"integerValue"`
+	} `json:"published_at"`
 	// categories:map[arrayValue:map[values:[map[integerValue:6]]]]
 	Categories struct {
 		Value struct {
@@ -89,9 +94,18 @@ func NotifyCategorySubscribers(ctx context.Context, e EntryEvent) error {
 
 	// create message to publish to PushNotification topic.
 	pushData := model.PushNotificationPayload{
-		Title: fmt.Sprintf("Gatra %v", category["title"]),
+		Title: fmt.Sprintf("%v", category["title"]),
 		Body:  entryTitle,
-		Data:  map[string]string{"uri": fmt.Sprintf("gatrabali://entries/%v", e.Value.Fields.ID.Value)},
+		Data: map[string]string{
+			"click_action":   "FLUTTER_NOTIFICATION_CLICK",
+			"data_type":      "entry",
+			"entry_title":    entryTitle,
+			"entry_id":       e.Value.Fields.ID.Value,
+			"category_id":    categoryID,
+			"category_title": fmt.Sprintf("%v", category["title"]),
+			"feed_id":        e.Value.Fields.FeedID.Value,
+			"published_at":   e.Value.Fields.PublishedAt.Value,
+		},
 	}
 
 	// get subscribers
