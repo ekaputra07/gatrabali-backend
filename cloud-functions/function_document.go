@@ -89,7 +89,7 @@ func NotifyCategorySubscribers(ctx context.Context, e EntryEvent) error {
 
 	// create message to publish to PushNotification topic.
 	pushData := model.PushNotificationPayload{
-		Title: fmt.Sprintf("Berita terbaru di %v", category["title"]),
+		Title: fmt.Sprintf("Gatra %v", category["title"]),
 		Body:  entryTitle,
 	}
 
