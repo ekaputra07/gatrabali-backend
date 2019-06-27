@@ -91,16 +91,24 @@ func SendPushNotification(ctx context.Context, m PubSubMessage) error {
 		return err
 	}
 
+	// Android & iOS
 	notification := &messaging.Notification{
 		Title: payload.Title,
 		Body:  payload.Body,
 	}
 
-	// create platform configs if CollapseKey provided
-	var androidConfig *messaging.AndroidConfig
-	if payload.CollapseKey != "" {
-		androidConfig = &messaging.AndroidConfig{CollapseKey: payload.CollapseKey}
+	// -- Android sepcific config
+	androidNotification := &messaging.AndroidNotification{
+		Icon:  "https://firebasestorage.googleapis.com/v0/b/gatrabali.appspot.com/o/app%2Fnotification.png?alt=media&token=b76afe54-fc9c-4a05-addb-3f9eaaee7d2f",
+		Color: "#4CB050",
 	}
+	androidConfig := messaging.AndroidConfig{
+		Notification: androidNotification,
+	}
+	if payload.CollapseKey != "" {
+		androidConfig.CollapseKey = payload.CollapseKey
+	}
+	// -- End Android sepcific config
 
 	// loop through tokens and send the notification
 	for token := range tokensMap {
@@ -108,9 +116,7 @@ func SendPushNotification(ctx context.Context, m PubSubMessage) error {
 			Data:         payload.Data,
 			Notification: notification,
 			Token:        token,
-		}
-		if androidConfig != nil {
-			message.Android = androidConfig
+			Android:      &androidConfig,
 		}
 
 		resp, err := client.Send(ctx, message)
