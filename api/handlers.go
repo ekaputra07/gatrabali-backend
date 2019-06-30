@@ -48,16 +48,24 @@ func (s *server) HandleFeeds() http.HandlerFunc {
 }
 
 func (s *server) HandleCategorySummary() http.HandlerFunc {
+	// Hardcoded the categories here since we only want to returns these categories (Daerah / Kota) only
+	categories := []map[string]interface{}{
+		{"id": 2, "title": "Badung"},
+		{"id": 3, "title": "Bangli"},
+		{"id": 4, "title": "Buleleng"},
+		{"id": 5, "title": "Denpasar"},
+		{"id": 6, "title": "Gianyar"},
+		{"id": 7, "title": "Jembrana"},
+		{"id": 8, "title": "Karangasem"},
+		{"id": 9, "title": "Klungkung"},
+		{"id": 10, "title": "Tabanan"},
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
-		categories, err := s.db.GetAllCategories(context.Background())
-		if err != nil {
-			s.SetServerError(w, err.Error())
-			return
-		}
-		summary := []map[string]interface{}{}
+		var summary []map[string]interface{}
 
 		// loop through categories and get 3 latest entries on that category
-		for _, cat := range *categories {
+		for _, cat := range categories {
 			entries, err := s.db.GetCategoryEntries(context.Background(), int(cat["id"].(int64)), 0, 3)
 			if err != nil {
 				continue
