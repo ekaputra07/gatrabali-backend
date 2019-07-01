@@ -120,7 +120,7 @@ func (db *DB) GetCategoryEntries(ctx context.Context, category, cursor, limit in
 	}
 
 	query := client.Collection(constant.Entries).
-		Where("categories", "array-contains", category).
+		Where("category_id", "==", category).
 		OrderBy("id", firestore.Desc).
 		Limit(limit)
 
