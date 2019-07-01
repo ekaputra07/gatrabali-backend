@@ -48,6 +48,7 @@ type Entry struct {
 	ID          int64        `json:"id" firestore:"id"`
 	UserID      int64        `json:"user_id" firestore:"user_id"`
 	FeedID      int64        `json:"feed_id" firestore:"feed_id"`
+	CategoryID  int64        `json:"category_id" firestore:"category_id"`
 	Title       string       `json:"title" firestore:"title"`
 	URL         string       `json:"url" firestore:"url"`
 	Content     string       `json:"content" firestore:"content"`
@@ -55,5 +56,5 @@ type Entry struct {
 	Author      *string      `json:"author,omitempty" firestore:"author,omitempty"`
 	Enclosures  *[]Enclosure `json:"enclosures,omitempty" firestore:"enclosures,omitempty"`
 	PublishedAt int64        `json:"published_at" firestore:"published_at"`
-	Categories  []int64      `json:"categories" firestore:"categories"`
+	Categories  []int64      `json:"categories" firestore:"categories"` // Deprecated: to support legacy app.
 }

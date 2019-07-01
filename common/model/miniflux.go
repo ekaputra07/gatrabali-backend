@@ -73,8 +73,9 @@ func (me *MEntry) ToEntry() (*Entry, error) {
 	t, _ := time.Parse(time.RFC3339, me.PublishedAt)
 	entry.PublishedAt = t.Unix() * 1000 // in millisecs
 
-	// set categories
-	entry.Categories = []int64{me.Feed.Category.ID}
+	// set category
+	entry.CategoryID = me.Feed.Category.ID
+	entry.Categories = []int64{me.Feed.Category.ID} // to support legacy app.
 
 	return &entry, nil
 }
