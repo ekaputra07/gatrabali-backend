@@ -141,6 +141,32 @@ func (s *server) HandleEntries() http.HandlerFunc {
 	}
 }
 
+func (s *server) HandleCollectionEntries(collection string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+		cur, _ := strconv.Atoi(query.Get("cursor"))
+		lim, _ := strconv.Atoi(query.Get("limit"))
+
+		// Returns latest entries
+		entries, err := s.db.GetCollectionEntries(context.Background(), collection, cur, lim)
+		if err != nil {
+			s.SetServerError(w, err.Error())
+			return
+		}
+		j, err := json.Marshal(entries)
+		if err != nil {
+			s.SetServerError(w, err.Error())
+			return
+		}
+
+		// cache if not empty
+		if len(*entries) > 0 {
+			w = s.SetCacheControl(w, 3600)
+		}
+		fmt.Fprint(w, string(j))
+	}
+}
+
 func (s *server) HandleEntry() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)

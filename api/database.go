@@ -103,6 +103,46 @@ func (db *DB) GetAllEntries(ctx context.Context, cursor, limit int) (*[]map[stri
 	return &entries, nil
 }
 
+// GetCollectionEntries returns paginated entries on specified collection
+func (db *DB) GetCollectionEntries(ctx context.Context, collection string, cursor, limit int) (*[]map[string]interface{}, error) {
+	client, err := db.app.Firestore(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
+
+	// default limit 10
+	// max limit 20
+	if limit == 0 {
+		limit = 10
+	} else if limit > 20 {
+		limit = 20
+	}
+
+	query := client.Collection(collection).
+		OrderBy("id", firestore.Desc).
+		Limit(limit)
+
+	if cursor > 0 {
+		query = query.StartAfter(cursor)
+	}
+
+	iter := query.Documents(ctx)
+	entries := []map[string]interface{}{}
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		entries = append(entries, doc.Data())
+	}
+	return &entries, nil
+}
+
 // GetCategoryEntries returns paginated entries in a category
 func (db *DB) GetCategoryEntries(ctx context.Context, category, cursor, limit int) (*[]map[string]interface{}, error) {
 	client, err := db.app.Firestore(ctx)
