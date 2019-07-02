@@ -62,10 +62,18 @@ func StartEntrySync(ctx context.Context, store *firestore.Client, payload *model
 			fmt.Printf("StartEntrySync failed: %s", err)
 			return nil
 		}
-		_, err = store.Collection(constant.Entries).Doc(strconv.FormatInt(*payload.ID, 10)).Set(ctx, entry)
+		// if category `kriminal` or `baliunited` store so sparate collection
+		if entry.CategoryID == 11 {
+			_, err = store.Collection(constant.Kriminal).Doc(strconv.FormatInt(*payload.ID, 10)).Set(ctx, entry)
+		} else if entry.CategoryID == 12 {
+			_, err = store.Collection(constant.BaliUnited).Doc(strconv.FormatInt(*payload.ID, 10)).Set(ctx, entry)
+		} else {
+			_, err = store.Collection(constant.Entries).Doc(strconv.FormatInt(*payload.ID, 10)).Set(ctx, entry)
+		}
 		return err
 
 	} else if *payload.Op == constant.OpDelete {
+		// we don't support delete on separate collection for now eg. kriminal
 		_, err := store.Collection(constant.Entries).Doc(strconv.FormatInt(*payload.ID, 10)).Delete(ctx)
 		return err
 	}

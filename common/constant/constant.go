@@ -23,4 +23,6 @@ const (
 	Kriminal = "kriminal"
 	// BaleBengong is collection for crime news entries
 	BaleBengong = "balebengong"
+	// BaliUnited collection for crime news entries
+	BaliUnited = "baliunited"
 )
