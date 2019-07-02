@@ -19,4 +19,8 @@ const (
 	Feeds = "feeds"
 	// Entries is collection for news entries
 	Entries = "entries"
+	// Kriminal is collection for crime news entries
+	Kriminal = "kriminal"
+	// BaleBengong is collection for crime news entries
+	BaleBengong = "balebengong"
 )
