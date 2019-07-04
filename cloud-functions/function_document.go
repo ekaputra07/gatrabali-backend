@@ -41,17 +41,12 @@ type EntryFields struct {
 	FeedID struct {
 		Value string `json:"integerValue"`
 	} `json:"feed_id"`
+	CategoryID struct {
+		Value string `json:"integerValue"`
+	} `json:"category_id"`
 	PublishedAt struct {
 		Value string `json:"integerValue"`
 	} `json:"published_at"`
-	// categories:map[arrayValue:map[values:[map[integerValue:6]]]]
-	Categories struct {
-		Value struct {
-			Values []struct {
-				Value string `json:"integerValue"`
-			} `json:"values"`
-		} `json:"arrayValue"`
-	} `json:"categories"`
 }
 
 // NotifyCategorySubscribers triggered when new entry written to Firestore,
@@ -59,7 +54,7 @@ type EntryFields struct {
 func NotifyCategorySubscribers(ctx context.Context, e EntryEvent) error {
 
 	fmt.Printf("NotifyCategorySubscribers triggered by entry=%v, with categories=%v\n",
-		e.Value.Fields.ID.Value, e.Value.Fields.Categories.Value)
+		e.Value.Fields.ID.Value, e.Value.Fields.CategoryID.Value)
 
 	client, err := firebaseApp.FirestoreClient(ctx)
 	if err != nil {
@@ -68,13 +63,7 @@ func NotifyCategorySubscribers(ctx context.Context, e EntryEvent) error {
 	defer client.Close()
 
 	entryTitle := e.Value.Fields.Title.Value
-	categories := e.Value.Fields.Categories.Value.Values
-	// if categories set, do nothing
-	if len(categories) == 0 {
-		return nil
-	}
-
-	categoryID := categories[0].Value
+	categoryID := e.Value.Fields.CategoryID.Value
 
 	// Get the category
 	doc, err := client.Collection(constant.Categories).Doc(fmt.Sprintf("%v", categoryID)).Get(ctx)
