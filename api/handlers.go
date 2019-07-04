@@ -183,7 +183,28 @@ func (s *server) HandleEntry() http.HandlerFunc {
 			return
 		}
 
-		w = s.SetCacheControl(w, 3600)
+		w = s.SetCacheControl(w, 86400) // cache 24hr
+		fmt.Fprint(w, string(j))
+	}
+}
+
+func (s *server) HandleCollectionEntry(collection string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		entryID, _ := strconv.Atoi(vars["entryID"])
+		entry, err := s.db.GetCollectionEntry(context.Background(), collection, entryID)
+		if err != nil {
+			s.SetServerError(w, err.Error())
+			return
+		}
+
+		j, err := json.Marshal(entry)
+		if err != nil {
+			s.SetServerError(w, err.Error())
+			return
+		}
+
+		w = s.SetCacheControl(w, 86400) // cache 24hr
 		fmt.Fprint(w, string(j))
 	}
 }

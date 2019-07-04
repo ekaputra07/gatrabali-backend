@@ -63,6 +63,22 @@ func (db *DB) GetEntry(ctx context.Context, id int) (*map[string]interface{}, er
 	return &data, nil
 }
 
+// GetCollectionEntry returns single entry from a specific collection
+func (db *DB) GetCollectionEntry(ctx context.Context, collection string, id int) (*map[string]interface{}, error) {
+	client, err := db.app.Firestore(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
+
+	doc, err := client.Collection(collection).Doc(strconv.Itoa(id)).Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+	data := doc.Data()
+	return &data, nil
+}
+
 // GetAllEntries returns paginated entries
 func (db *DB) GetAllEntries(ctx context.Context, cursor, limit int) (*[]map[string]interface{}, error) {
 	client, err := db.app.Firestore(ctx)
