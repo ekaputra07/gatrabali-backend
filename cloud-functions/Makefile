@@ -15,4 +15,6 @@ deploy_pubsub_handler:
 	gcloud functions deploy SendPushNotification --runtime=go111 --trigger-topic=PushNotification
 
 deploy_doc_handler:
-	gcloud functions deploy NotifyCategorySubscribers --runtime=go111 --trigger-event=providers/cloud.firestore/eventTypes/document.create --trigger-resource="projects/gatrabali/databases/(default)/documents/entries/{entryId}"
+	gcloud functions deploy NotifyCategorySubscribers-main --entry-point NotifyCategorySubscribers --runtime=go111 --trigger-event=providers/cloud.firestore/eventTypes/document.create --trigger-resource="projects/gatrabali/databases/(default)/documents/entries/{entryId}"
+	gcloud functions deploy NotifyCategorySubscribers-kriminal --entry-point NotifyCategorySubscribers --runtime=go111 --trigger-event=providers/cloud.firestore/eventTypes/document.create --trigger-resource="projects/gatrabali/databases/(default)/documents/kriminal/{entryId}"
+	gcloud functions deploy NotifyCategorySubscribers-baliunited --entry-point NotifyCategorySubscribers --runtime=go111 --trigger-event=providers/cloud.firestore/eventTypes/document.create --trigger-resource="projects/gatrabali/databases/(default)/documents/baliunited/{entryId}"
