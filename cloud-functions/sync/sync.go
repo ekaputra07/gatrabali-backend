@@ -67,6 +67,8 @@ func StartEntrySync(ctx context.Context, store *firestore.Client, payload *model
 			_, err = store.Collection(constant.Kriminal).Doc(strconv.FormatInt(*payload.ID, 10)).Set(ctx, entry)
 		} else if entry.CategoryID == 12 {
 			_, err = store.Collection(constant.BaliUnited).Doc(strconv.FormatInt(*payload.ID, 10)).Set(ctx, entry)
+		} else if entry.CategoryID > 12 {
+			_, err = store.Collection(constant.BaleBengong).Doc(strconv.FormatInt(*payload.ID, 10)).Set(ctx, entry)
 		} else {
 			_, err = store.Collection(constant.Entries).Doc(strconv.FormatInt(*payload.ID, 10)).Set(ctx, entry)
 		}
