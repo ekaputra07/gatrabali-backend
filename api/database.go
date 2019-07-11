@@ -47,22 +47,6 @@ func (db *DB) GetFeeds(ctx context.Context) (*[]map[string]interface{}, error) {
 	return &feeds, nil
 }
 
-// GetEntry returns single entry
-func (db *DB) GetEntry(ctx context.Context, id int) (*map[string]interface{}, error) {
-	client, err := db.app.Firestore(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer client.Close()
-
-	doc, err := client.Collection(constant.Entries).Doc(strconv.Itoa(id)).Get(ctx)
-	if err != nil {
-		return nil, err
-	}
-	data := doc.Data()
-	return &data, nil
-}
-
 // GetCollectionEntry returns single entry from a specific collection
 func (db *DB) GetCollectionEntry(ctx context.Context, collection string, id int) (*map[string]interface{}, error) {
 	client, err := db.app.Firestore(ctx)
@@ -77,46 +61,6 @@ func (db *DB) GetCollectionEntry(ctx context.Context, collection string, id int)
 	}
 	data := doc.Data()
 	return &data, nil
-}
-
-// GetAllEntries returns paginated entries
-func (db *DB) GetAllEntries(ctx context.Context, cursor, limit int) (*[]map[string]interface{}, error) {
-	client, err := db.app.Firestore(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer client.Close()
-
-	// default limit 10
-	// max limit 20
-	if limit == 0 {
-		limit = 10
-	} else if limit > 20 {
-		limit = 20
-	}
-
-	query := client.Collection(constant.Entries).
-		OrderBy("id", firestore.Desc).
-		Limit(limit)
-
-	if cursor > 0 {
-		query = query.StartAfter(cursor)
-	}
-
-	iter := query.Documents(ctx)
-	entries := []map[string]interface{}{}
-	for {
-		doc, err := iter.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-		entries = append(entries, doc.Data())
-	}
-	return &entries, nil
 }
 
 // GetCollectionEntries returns paginated entries on specified collection
@@ -159,8 +103,8 @@ func (db *DB) GetCollectionEntries(ctx context.Context, collection string, curso
 	return &entries, nil
 }
 
-// GetCategoryEntries returns paginated entries in a category
-func (db *DB) GetCategoryEntries(ctx context.Context, category, cursor, limit int) (*[]map[string]interface{}, error) {
+// GetCollectionCategoryEntries returns paginated entries in a category
+func (db *DB) GetCollectionCategoryEntries(ctx context.Context, collection string, category, cursor, limit int) (*[]map[string]interface{}, error) {
 	client, err := db.app.Firestore(ctx)
 	if err != nil {
 		return nil, err
@@ -175,7 +119,7 @@ func (db *DB) GetCategoryEntries(ctx context.Context, category, cursor, limit in
 		limit = 20
 	}
 
-	query := client.Collection(constant.Entries).
+	query := client.Collection(collection).
 		Where("category_id", "==", category).
 		OrderBy("id", firestore.Desc).
 		Limit(limit)
