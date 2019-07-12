@@ -8,8 +8,6 @@ import (
 	"strconv"
 
 	"github.com/apps4bali/gatrabali-backend/common/constant"
-
-	goctx "github.com/gorilla/context"
 	"github.com/gorilla/mux"
 )
 
@@ -49,7 +47,28 @@ func (s *server) HandleFeeds() http.HandlerFunc {
 	}
 }
 
-func (s *server) HandleCategorySummary(collection string, limit int) http.HandlerFunc {
+func (s *server) HandleEntry(collection string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		entryID, _ := strconv.Atoi(vars["entryID"])
+		entry, err := s.db.GetCollectionEntry(context.Background(), collection, entryID)
+		if err != nil {
+			s.SetServerError(w, err.Error())
+			return
+		}
+
+		j, err := json.Marshal(entry)
+		if err != nil {
+			s.SetServerError(w, err.Error())
+			return
+		}
+
+		w = s.SetCacheControl(w, 86400) // cache 24hr
+		fmt.Fprint(w, string(j))
+	}
+}
+
+func (s *server) HandleCategorySummary(collection, orderBy string, limit int) http.HandlerFunc {
 	var categories []map[string]interface{}
 
 	// Hardcoded the categories here since we only want to returns these categories for specified collection
@@ -77,13 +96,12 @@ func (s *server) HandleCategorySummary(collection string, limit int) http.Handle
 			{"id": 20, "title": "Travel"},
 		}
 	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		var summary []map[string]interface{}
 
 		// loop through categories and get 3 latest entries on that category
 		for _, cat := range categories {
-			entries, err := s.db.GetCollectionCategoryEntries(context.Background(), collection, cat["id"].(int), 0, limit)
+			entries, err := s.db.GetCollectionCategoryEntries(context.Background(), collection, cat["id"].(int), orderBy, 0, limit)
 			if err != nil {
 				continue
 			}
@@ -106,7 +124,7 @@ func (s *server) HandleCategorySummary(collection string, limit int) http.Handle
 	}
 }
 
-func (s *server) HandleEntries(collection string) http.HandlerFunc {
+func (s *server) HandleEntries(collection, orderBy string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		cat, _ := strconv.Atoi(query.Get("categoryId"))
@@ -115,7 +133,7 @@ func (s *server) HandleEntries(collection string) http.HandlerFunc {
 
 		if cat == 0 {
 			// Returns latest entries
-			entries, err := s.db.GetCollectionEntries(context.Background(), collection, cur, lim)
+			entries, err := s.db.GetCollectionEntries(context.Background(), collection, orderBy, cur, lim)
 			if err != nil {
 				s.SetServerError(w, err.Error())
 				return
@@ -134,7 +152,7 @@ func (s *server) HandleEntries(collection string) http.HandlerFunc {
 
 		} else {
 			// Returns latest entries in category
-			entries, err := s.db.GetCollectionCategoryEntries(context.Background(), collection, cat, cur, lim)
+			entries, err := s.db.GetCollectionCategoryEntries(context.Background(), collection, cat, orderBy, cur, lim)
 			if err != nil {
 				s.SetServerError(w, err.Error())
 				return
@@ -147,34 +165,9 @@ func (s *server) HandleEntries(collection string) http.HandlerFunc {
 
 			// cache 1hr if not empty, if there's user object in request context then only cache for 1 min
 			if len(*entries) > 0 {
-				if goctx.Get(r, userCtxKey) != nil {
-					w = s.SetCacheControl(w, 60)
-				} else {
-					w = s.SetCacheControl(w, 3600)
-				}
+				w = s.SetCacheControl(w, 3600)
 			}
 			fmt.Fprint(w, string(j))
 		}
-	}
-}
-
-func (s *server) HandleEntry(collection string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		entryID, _ := strconv.Atoi(vars["entryID"])
-		entry, err := s.db.GetCollectionEntry(context.Background(), collection, entryID)
-		if err != nil {
-			s.SetServerError(w, err.Error())
-			return
-		}
-
-		j, err := json.Marshal(entry)
-		if err != nil {
-			s.SetServerError(w, err.Error())
-			return
-		}
-
-		w = s.SetCacheControl(w, 86400) // cache 24hr
-		fmt.Fprint(w, string(j))
 	}
 }

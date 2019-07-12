@@ -64,9 +64,11 @@ func StartEntrySync(ctx context.Context, store *firestore.Client, payload *model
 		}
 		// if category `kriminal` or `baliunited` store so sparate collection
 		if entry.CategoryID == 11 {
-			_, err = store.Collection(constant.Kriminal).Doc(strconv.FormatInt(*payload.ID, 10)).Set(ctx, entry)
+			entry.ID = entry.PublishedAt
+			_, err = store.Collection(constant.Kriminal).Doc(strconv.FormatInt(entry.ID, 10)).Set(ctx, entry)
 		} else if entry.CategoryID == 12 {
-			_, err = store.Collection(constant.BaliUnited).Doc(strconv.FormatInt(*payload.ID, 10)).Set(ctx, entry)
+			entry.ID = entry.PublishedAt
+			_, err = store.Collection(constant.BaliUnited).Doc(strconv.FormatInt(entry.ID, 10)).Set(ctx, entry)
 		} else if entry.CategoryID > 12 {
 			_, err = store.Collection(constant.BaleBengong).Doc(strconv.FormatInt(*payload.ID, 10)).Set(ctx, entry)
 		} else {
