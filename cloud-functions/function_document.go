@@ -64,9 +64,19 @@ func NotifyCategorySubscribers(ctx context.Context, e EntryEvent) error {
 
 	entryTitle := e.Value.Fields.Title.Value
 	categoryID := e.Value.Fields.CategoryID.Value
+	feedID := e.Value.Fields.FeedID.Value
+
+	// overrides categoryID if feedID belongs to BaleBengong
+	baleBengongFeeds := []string{"33", "34", "35", "36", "37", "38", "39", "40"}
+	for _, ID := range baleBengongFeeds {
+		if ID == feedID {
+			categoryID = "balebengong"
+			break
+		}
+	}
 
 	// Get the category
-	doc, err := client.Collection(constant.Categories).Doc(fmt.Sprintf("%v", categoryID)).Get(ctx)
+	doc, err := client.Collection(constant.Categories).Doc(categoryID).Get(ctx)
 	if err != nil {
 		fmt.Printf("Category with ID=%v does not exists\n", categoryID)
 		return nil
@@ -90,7 +100,7 @@ func NotifyCategorySubscribers(ctx context.Context, e EntryEvent) error {
 			"data_type":      "entry",
 			"entry_title":    entryTitle,
 			"entry_id":       e.Value.Fields.ID.Value,
-			"category_id":    categoryID,
+			"category_id":    e.Value.Fields.CategoryID.Value,
 			"category_title": fmt.Sprintf("%v", category["title"]),
 			"feed_id":        e.Value.Fields.FeedID.Value,
 			"published_at":   e.Value.Fields.PublishedAt.Value,
