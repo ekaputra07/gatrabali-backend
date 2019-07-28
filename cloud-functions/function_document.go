@@ -53,10 +53,7 @@ type EntryFields struct {
 // isUserExists check to see if user with given ID is currently exists.
 func isUserExists(ctx context.Context, client *firestore.Client, userID string) bool {
 	_, err := client.Collection("users").Doc(userID).Get(ctx)
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
 // NotifyCategorySubscribers triggered when new entry written to Firestore,
