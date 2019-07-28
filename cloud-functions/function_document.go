@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"cloud.google.com/go/firestore"
 	"cloud.google.com/go/pubsub"
 	"google.golang.org/api/iterator"
 
@@ -47,6 +48,15 @@ type EntryFields struct {
 	PublishedAt struct {
 		Value string `json:"integerValue"`
 	} `json:"published_at"`
+}
+
+// isUserExists check to see if user with given ID is currently exists.
+func isUserExists(ctx context.Context, client *firestore.Client, userID string) bool {
+	_, err := client.Collection("users").Doc(userID).Get(ctx)
+	if err != nil {
+		return false
+	}
+	return true
 }
 
 // NotifyCategorySubscribers triggered when new entry written to Firestore,
@@ -118,10 +128,20 @@ func NotifyCategorySubscribers(ctx context.Context, e EntryEvent) error {
 			fmt.Println(err)
 			continue
 		}
-		subscriber := doc.Data()
 
+		subscriber := doc.Data()
 		// set recipient
 		pushData.UserID = fmt.Sprintf("%v", subscriber["user_id"])
+
+		// check to see if user exists before publishing a message.
+		// if user does not exists, delete them from subscriber list.
+		if !isUserExists(ctx, client, pushData.UserID) {
+			_, err := doc.Ref.Delete(ctx)
+			if err != nil {
+				fmt.Printf("Failed to delete subscriber %v from category %v\n", pushData.UserID, categoryID)
+			}
+			continue
+		}
 
 		j, _ := json.Marshal(pushData)
 		pubsubMsg := &pubsub.Message{Data: j}
