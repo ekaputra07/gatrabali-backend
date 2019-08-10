@@ -22,7 +22,7 @@ type PubSubMessage struct {
 
 // SyncData calls Miniflux API and store its response to Cloud Firestore
 func SyncData(ctx context.Context, m PubSubMessage) error {
-	log.Printf("SyncData triggered with payload: %v\n", string(m.Data))
+	log.Printf("Triggered with payload: %v\n", string(m.Data))
 
 	var payload model.SyncPayload
 	if err := json.Unmarshal(m.Data, &payload); err != nil {

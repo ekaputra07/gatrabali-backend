@@ -14,25 +14,25 @@ import (
 	"github.com/apps4bali/gatrabali-backend/common/model"
 )
 
-// EntryEvent is the payload of a Firestore event.
-type EntryEvent struct {
-	OldValue   EntryValue `json:"oldValue"`
-	Value      EntryValue `json:"value"`
+// entryEvent is the payload of a Firestore event.
+type entryEvent struct {
+	OldValue   entryValue `json:"oldValue"`
+	Value      entryValue `json:"value"`
 	UpdateMask struct {
 		FieldPaths []string `json:"fieldPaths"`
 	} `json:"updateMask"`
 }
 
-// EntryValue is the values in Firestore event.
-type EntryValue struct {
+// entryValue is the values in Firestore event.
+type entryValue struct {
 	CreateTime time.Time   `json:"createTime"`
-	Fields     EntryFields `json:"fields"`
+	Fields     entryFields `json:"fields"`
 	Name       string      `json:"name"`
 	UpdateTime time.Time   `json:"updateTime"`
 }
 
-// EntryFields is the entry fields itself, we only need id, title and categories here.
-type EntryFields struct {
+// entryFields is the entry fields itself, we only need id, title and categories here.
+type entryFields struct {
 	ID struct {
 		Value string `json:"integerValue"`
 	} `json:"id"`
@@ -58,9 +58,9 @@ func isUserExists(ctx context.Context, client *firestore.Client, userID string) 
 
 // NotifyCategorySubscribers triggered when new entry written to Firestore,
 // get the list of the subscribers for the category of this entry and send a message to PushNotification topic.
-func NotifyCategorySubscribers(ctx context.Context, e EntryEvent) error {
+func NotifyCategorySubscribers(ctx context.Context, e entryEvent) error {
 
-	fmt.Printf("NotifyCategorySubscribers triggered by entry=%v, with categories=%v\n",
+	fmt.Printf("Triggered by entry=%v, with categories=%v\n",
 		e.Value.Fields.ID.Value, e.Value.Fields.CategoryID.Value)
 
 	client, err := firebaseApp.FirestoreClient(ctx)
