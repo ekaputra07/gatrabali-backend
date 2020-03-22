@@ -6,3 +6,5 @@ require (
 	github.com/apps4bali/gatrabali-backend v0.0.0-20190702105043-4150f5561bb7
 	google.golang.org/api v0.8.0
 )
+
+go 1.13

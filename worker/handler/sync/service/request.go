@@ -1,13 +1,14 @@
-package sync
+package service
 
 import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/apps4bali/gatrabali-backend/common/model"
+
+	"worker/config"
 )
 
 // create client with default 5secs timeout
@@ -15,12 +16,12 @@ var client = &http.Client{Timeout: time.Duration(5) * time.Second}
 
 // create a request object which includes Basic Authentication
 func createGetRequest(path string) (*http.Request, error) {
-	url := os.Getenv("MINIFLUX_HOST") + path
+	url := config.MinifluxHost + path
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
-	req.SetBasicAuth(os.Getenv("MINIFLUX_USER"), os.Getenv("MINIFLUX_PASS"))
+	req.SetBasicAuth(config.MinifluxUser, config.MinifluxPass)
 	return req, nil
 }
 
@@ -31,12 +32,13 @@ func GetCategories() (*model.CategoryList, error) {
 		return nil, err
 	}
 	res, err := client.Do(req)
+	if res != nil {
+		defer res.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
-
-	if res.StatusCode != 200 {
+	if http.StatusOK != res.StatusCode {
 		return nil, fmt.Errorf("GetCategories() error status code: %v", res.StatusCode)
 	}
 
@@ -52,12 +54,13 @@ func GetFeedIcon(feedID int64) (*model.FeedIcon, error) {
 		return nil, err
 	}
 	res, err := client.Do(req)
+	if res != nil {
+		defer res.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
-
-	if res.StatusCode != 200 {
+	if http.StatusOK != res.StatusCode {
 		return nil, fmt.Errorf("GetFeedIcon(%v) error status code: %v", feedID, res.StatusCode)
 	}
 
@@ -73,12 +76,13 @@ func GetFeed(id int64) (*model.Feed, error) {
 		return nil, err
 	}
 	res, err := client.Do(req)
+	if res != nil {
+		defer res.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
-
-	if res.StatusCode != 200 {
+	if http.StatusOK != res.StatusCode {
 		return nil, fmt.Errorf("GetFeed(%v) error status code: %v", id, res.StatusCode)
 	}
 
@@ -102,12 +106,13 @@ func GetEntry(id int64) (*model.Entry, error) {
 		return nil, err
 	}
 	res, err := client.Do(req)
+	if res != nil {
+		defer res.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
-
-	if res.StatusCode != 200 {
+	if http.StatusOK != res.StatusCode {
 		return nil, fmt.Errorf("GetEntry(%v) error status code: %v", id, res.StatusCode)
 	}
 

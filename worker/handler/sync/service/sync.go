@@ -1,4 +1,4 @@
-package sync
+package service
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"cloud.google.com/go/firestore"
-
 	"github.com/apps4bali/gatrabali-backend/common/constant"
 	"github.com/apps4bali/gatrabali-backend/common/model"
 )
@@ -16,8 +15,7 @@ func StartCategorySync(ctx context.Context, store *firestore.Client, payload *mo
 	if *payload.Op == constant.OpWrite {
 		categories, err := GetCategories()
 		if err != nil {
-			fmt.Printf("StartCategorySync failed: %s", err)
-			return nil
+			return fmt.Errorf("StartCategorySync failed: %s", err)
 		}
 
 		// write in batch
@@ -41,8 +39,7 @@ func StartFeedSync(ctx context.Context, store *firestore.Client, payload *model.
 	if *payload.Op == constant.OpWrite {
 		feed, err := GetFeed(*payload.ID)
 		if err != nil {
-			fmt.Printf("StartFeedSync failed: %s", err)
-			return nil
+			return fmt.Errorf("StartFeedSync failed: %s", err)
 		}
 		_, err = store.Collection(constant.Feeds).Doc(strconv.FormatInt(*payload.ID, 10)).Set(ctx, feed)
 		return err
@@ -59,8 +56,7 @@ func StartEntrySync(ctx context.Context, store *firestore.Client, payload *model
 	if *payload.Op == constant.OpWrite {
 		entry, err := GetEntry(*payload.ID)
 		if err != nil {
-			fmt.Printf("StartEntrySync failed: %s", err)
-			return nil
+			return fmt.Errorf("StartEntrySync failed: %s", err)
 		}
 		// if category `kriminal` or `baliunited` store so sparate collection
 		if entry.CategoryID == 11 {

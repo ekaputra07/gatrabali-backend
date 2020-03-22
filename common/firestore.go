@@ -1,4 +1,4 @@
-package model
+package common
 
 // Category represents category Firestore document
 type Category struct {

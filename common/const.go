@@ -1,4 +1,4 @@
-package constant
+package common
 
 const (
 	// TypeCategory news category

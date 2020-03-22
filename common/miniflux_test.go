@@ -1,4 +1,4 @@
-package model
+package common
 
 import (
 	"encoding/json"
@@ -124,7 +124,7 @@ func TestToEntryTransformation(t *testing.T) {
 		t.Error(err)
 	}
 
-	entry := mEntry.ToEntry()
+	entry, _ := mEntry.ToEntry()
 	if entry.ID != 1000 {
 		t.Error("Wrong ID value")
 	}
@@ -133,9 +133,6 @@ func TestToEntryTransformation(t *testing.T) {
 	}
 	if entry.FeedID != 15 {
 		t.Error("Wrong FeedID value")
-	}
-	if entry.Hash != "474a2a1c8ae65b9e591d1b9f16c914b5bb8c411ccb34e8ea5d4b4d15ab47709c" {
-		t.Error("Wrong Hash value")
 	}
 	if entry.Title != "Test Title" {
 		t.Error("Wrong Title value")
