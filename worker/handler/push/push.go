@@ -11,6 +11,7 @@ import (
 	"cloud.google.com/go/firestore"
 	"firebase.google.com/go/messaging"
 	"github.com/apps4bali/gatrabali-backend/common/model"
+	"github.com/fiberweb/pubsub"
 	"github.com/gofiber/fiber"
 )
 
@@ -18,12 +19,12 @@ import (
 func Handler(firestoreClient *firestore.Client, messagingClient *messaging.Client) func(*fiber.Ctx) {
 	return func(c *fiber.Ctx) {
 		ctx := context.Background()
-		data := c.Locals("PubSubData").([]byte)
-		log.Printf("SendPushNotification triggered with payload: %v\n", string(data))
+		msg := c.Locals(pubsub.LocalsKey).(*pubsub.Message)
+		log.Printf("SendPushNotification triggered with payload: %v\n", msg)
 
 		// validate payload
 		var payload model.PushNotificationPayload
-		if err := json.Unmarshal(data, &payload); err != nil {
+		if err := json.Unmarshal(msg.Message.Data, &payload); err != nil {
 			c.Next(err)
 			return
 		}
@@ -88,8 +89,11 @@ func Handler(firestoreClient *firestore.Client, messagingClient *messaging.Clien
 		}
 
 		// store back the remaining tokens to user document
-		_, err = firestoreClient.Collection("users").Doc(payload.UserID).Update(ctx, []firestore.Update{{Path: "fcm_tokens", Value: tokensMap}})
-		if err != nil {
+		if _, err = firestoreClient.
+			Collection("users").
+			Doc(payload.UserID).
+			Update(ctx, []firestore.Update{{Path: "fcm_tokens", Value: tokensMap}}); err != nil {
+
 			c.Next(fmt.Errorf("Error saving fcm_tokens back to user doc: %v", err))
 			return
 		}

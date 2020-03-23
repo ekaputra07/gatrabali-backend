@@ -21,8 +21,10 @@ const (
 	Entries = "entries"
 	// Kriminal is collection for crime news entries
 	Kriminal = "kriminal"
-	// BaleBengong is collection for crime news entries
+	// BaleBengong is collection for BaleBengong news entries
 	BaleBengong = "balebengong"
-	// BaliUnited collection for crime news entries
+	// BaliUnited collection for Bali United news entries
 	BaliUnited = "baliunited"
+	// EntryResponses collection for responses/comments entries
+	EntryResponses = "entry_responses"
 )

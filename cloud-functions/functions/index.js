@@ -9,14 +9,14 @@ const topic = "firestore_events";
  * For better scalability please consider using separate topic.
  */
 exports.entryOnCreate = firesub.FirestoreOnCreate("/entries/{entryId}", topic, {
-  collection: "entries"
+  type: "entries"
 });
 
 exports.kriminalOnCreate = firesub.FirestoreOnCreate(
   "/kriminal/{entryId}",
   topic,
   {
-    collection: "kriminal"
+    type: "entries"
   }
 );
 
@@ -24,7 +24,7 @@ exports.baliunitedOnCreate = firesub.FirestoreOnCreate(
   "/baliunited/{entryId}",
   topic,
   {
-    collection: "baliunited"
+    type: "entries"
   }
 );
 
@@ -32,7 +32,7 @@ exports.balebengongOnCreate = firesub.FirestoreOnCreate(
   "/balebengong/{entryId}",
   topic,
   {
-    collection: "balebengong"
+    type: "entries"
   }
 );
 
@@ -40,6 +40,6 @@ exports.entryResponseOnWrite = firesub.FirestoreOnWrite(
   "/entry_responses/{entryId}",
   topic,
   {
-    collection: "entry_responses"
+    type: "responses"
   }
 );

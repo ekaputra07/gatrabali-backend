@@ -10,6 +10,7 @@ import (
 	"cloud.google.com/go/firestore"
 	"github.com/apps4bali/gatrabali-backend/common/constant"
 	"github.com/apps4bali/gatrabali-backend/common/model"
+	"github.com/fiberweb/pubsub"
 	"github.com/gofiber/fiber"
 
 	"worker/handler/sync/service"
@@ -19,12 +20,12 @@ import (
 func Handler(client *firestore.Client) func(*fiber.Ctx) {
 	return func(c *fiber.Ctx) {
 		ctx := context.Background()
-		data := c.Locals("PubSubData").([]byte)
+		msg := c.Locals(pubsub.LocalsKey).(*pubsub.Message)
 
-		log.Printf("Sync triggered with payload: %v\n", string(data))
+		log.Printf("Sync triggered with payload: %v\n", msg)
 
 		var payload *model.SyncPayload
-		if err := json.Unmarshal(data, &payload); err != nil {
+		if err := json.Unmarshal(msg.Message.Data, &payload); err != nil {
 			c.Next(err)
 			return
 		}
@@ -37,14 +38,17 @@ func Handler(client *firestore.Client) func(*fiber.Ctx) {
 		case constant.TypeCategory:
 			if err := service.StartCategorySync(ctx, client, payload); err != nil {
 				c.Next(err)
+				return
 			}
 		case constant.TypeFeed:
 			if err := service.StartFeedSync(ctx, client, payload); err != nil {
 				c.Next(err)
+				return
 			}
 		case constant.TypeEntry:
 			if err := service.StartEntrySync(ctx, client, payload); err != nil {
 				c.Next(err)
+				return
 			}
 		}
 		c.SendStatus(http.StatusOK)
