@@ -40,12 +40,10 @@ github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385 h1:clC1lXBpe2kTj2VHdaI
 github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385/go.mod h1:0vRUJqYpeSZifjYj7uP3BG/gKcuzL9xWVV/Y+cK33KM=
 github.com/fasthttp/websocket v1.4.2 h1:AU/zSiIIAuJjBMf5o+vO0syGOnEfvZRu40xIhW/3RuM=
 github.com/fasthttp/websocket v1.4.2/go.mod h1:smsv/h4PBEBaU0XDTY5UwJTpZv69fQ0FfcLJr21mA6Y=
-github.com/fiberweb/pubsub v1.0.0 h1:rqYS6yjysU0NbRWZTXfXcCiuF39ixz1ias7qx9hSAB0=
-github.com/fiberweb/pubsub v1.0.0/go.mod h1:aGwv1oxZN4DoV4P8sD7HyMGEm8wJBJcEYt/Y58aGwGI=
+github.com/fiberweb/pubsub v1.1.0 h1:nfBzgukilFtcjiNqhpsm3fsHOv6l+TzroW1n1T+inlc=
+github.com/fiberweb/pubsub v1.1.0/go.mod h1:aGwv1oxZN4DoV4P8sD7HyMGEm8wJBJcEYt/Y58aGwGI=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20191125211704-12ad95a8df72/go.mod h1:tQ2UAYgL5IevRw8kRxooKSPJfGvJ9fJQFa0TUsXzTg8=
 github.com/gofiber/fiber v1.8.32/go.mod h1:JD9ZZgxqitISS6yDcKP26BKR6Ul+z6UrZX7WlalC1sE=
-github.com/gofiber/fiber v1.8.33 h1:oq4f0fhiKNrz1CAxsql3tpyIQ+1S+RekRoiczyYiUdI=
-github.com/gofiber/fiber v1.8.33/go.mod h1:JD9ZZgxqitISS6yDcKP26BKR6Ul+z6UrZX7WlalC1sE=
 github.com/gofiber/fiber v1.8.41 h1:FQbWf8H+rmkpeAqMZGdy3mMV2S6cN+F7hpEcew8Qv9g=
 github.com/gofiber/fiber v1.8.41/go.mod h1:yQhhFUJprqnZVaEbd5h4ZqU+wb9vzP5imw7UbjGlDuQ=
 github.com/gofiber/template v1.0.0 h1:Vf4Fby9zUWVQyY2y69KKyRHsEYlIE+Pxb25M+jiaEL0=
@@ -108,8 +106,6 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/savsgio/gotils v0.0.0-20200117113501-90175b0fbe3f h1:PgA+Olipyj258EIEYnpFFONrrCcAIWNUNoFhUfMqAGY=
 github.com/savsgio/gotils v0.0.0-20200117113501-90175b0fbe3f/go.mod h1:lHhJedqxCoHN+zMtwGNTXWmF0u9Jt363FYRhV6g0CdY=
-github.com/savsgio/gotils v0.0.0-20200319105752-a9cc718f6a3f h1:XfUnevLK4O22at3R77FlyQHKwlQs75LELdsH2wRX2KQ=
-github.com/savsgio/gotils v0.0.0-20200319105752-a9cc718f6a3f/go.mod h1:lHhJedqxCoHN+zMtwGNTXWmF0u9Jt363FYRhV6g0CdY=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0Q=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
@@ -226,12 +222,9 @@ google.golang.org/grpc v1.19.0/go.mod h1:mqu4LbDTu4XGKhr4mRzUsmM4RtVoemTSY81AxZi
 google.golang.org/grpc v1.20.1/go.mod h1:10oTOabMzJvdu6/UiuZezV6QK5dSlG84ov/aaiqXj38=
 google.golang.org/grpc v1.21.1 h1:j6XxA85m/6txkUCHvzlV5f+HBNl/1r5cZ2A/3IEFOO8=
 google.golang.org/grpc v1.21.1/go.mod h1:oYelfM1adQP15Ek0mdvEgi9Df8B9CZIaU1084ijfRaM=
-gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 h1:qIbj1fsPNlZgppZ+VLlY7N33q108Sa+fhmuc+sWQYwY=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/errgo.v2 v2.1.0/go.mod h1:hNsd1EY+bozCKY1Ytp96fpM3vjJbqLJn88ws8XvfDNI=
-gopkg.in/yaml.v2 v2.2.8 h1:obN1ZagJSUGI0Ek/LBmuj4SNLPfIny3KsKFopxRdj10=
-gopkg.in/yaml.v2 v2.2.8/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 honnef.co/go/tools v0.0.0-20190102054323-c2f93a96b099/go.mod h1:rf3lG4BRIbNafJWhAfAdb/ePZxsR/4RtNHQocxwk9r4=
 honnef.co/go/tools v0.0.0-20190106161140-3f1c8253044a/go.mod h1:rf3lG4BRIbNafJWhAfAdb/ePZxsR/4RtNHQocxwk9r4=
 honnef.co/go/tools v0.0.0-20190418001031-e561f6794a2a/go.mod h1:rf3lG4BRIbNafJWhAfAdb/ePZxsR/4RtNHQocxwk9r4=
