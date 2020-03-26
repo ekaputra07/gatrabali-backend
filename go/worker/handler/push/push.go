@@ -10,7 +10,7 @@ import (
 
 	"cloud.google.com/go/firestore"
 	"firebase.google.com/go/messaging"
-	"github.com/apps4bali/gatrabali-backend/common/model"
+	"github.com/apps4bali/gatrabali-backend/go/common"
 	"github.com/fiberweb/pubsub"
 	"github.com/gofiber/fiber"
 )
@@ -23,7 +23,7 @@ func Handler(firestoreClient *firestore.Client, messagingClient *messaging.Clien
 		log.Printf("SendPushNotification triggered with payload: %v\n", msg)
 
 		// validate payload
-		var payload model.PushNotificationPayload
+		var payload common.PushNotificationPayload
 		if err := json.Unmarshal(msg.Message.Data, &payload); err != nil {
 			c.Next(err)
 			return

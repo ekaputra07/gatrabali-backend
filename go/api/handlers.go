@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/apps4bali/gatrabali-backend/common/constant"
+	"github.com/apps4bali/gatrabali-backend/go/common"
 	"github.com/gorilla/mux"
 )
 
@@ -72,7 +72,7 @@ func (s *server) HandleCategorySummary(collection, orderBy string, limit int) ht
 	var categories []map[string]interface{}
 
 	// Hardcoded the categories here since we only want to returns these categories for specified collection
-	if collection == constant.Entries {
+	if collection == common.Entries {
 		categories = []map[string]interface{}{
 			{"id": 2, "title": "Badung"},
 			{"id": 3, "title": "Bangli"},
@@ -84,7 +84,7 @@ func (s *server) HandleCategorySummary(collection, orderBy string, limit int) ht
 			{"id": 9, "title": "Klungkung"},
 			{"id": 10, "title": "Tabanan"},
 		}
-	} else if collection == constant.BaleBengong {
+	} else if collection == common.BaleBengong {
 		categories = []map[string]interface{}{
 			{"id": 13, "title": "Opini"},
 			{"id": 14, "title": "Teknologi"},
