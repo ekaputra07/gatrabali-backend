@@ -1,4 +1,4 @@
-package common
+package types
 
 // SyncPayload is the pub/sub message payload after deserialized
 type SyncPayload struct {
