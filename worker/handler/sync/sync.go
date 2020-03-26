@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"cloud.google.com/go/firestore"
-	"github.com/apps4bali/gatrabali-backend/go/common"
+	"github.com/apps4bali/gatrabali-backend/common"
 	"github.com/fiberweb/pubsub"
 	"github.com/gofiber/fiber"
 

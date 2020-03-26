@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"cloud.google.com/go/firestore"
-	"github.com/apps4bali/gatrabali-backend/go/common"
+	"github.com/apps4bali/gatrabali-backend/common"
 )
 
 // StartCategorySync calls Miniflux categories API and store the objects to Firestore

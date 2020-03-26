@@ -9,7 +9,7 @@ import (
 
 	"cloud.google.com/go/firestore"
 	"cloud.google.com/go/pubsub"
-	"github.com/apps4bali/gatrabali-backend/go/common"
+	"github.com/apps4bali/gatrabali-backend/common"
 	"google.golang.org/api/iterator"
 )
 

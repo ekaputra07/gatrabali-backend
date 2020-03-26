@@ -10,7 +10,7 @@ import (
 
 	"cloud.google.com/go/firestore"
 	"firebase.google.com/go/messaging"
-	"github.com/apps4bali/gatrabali-backend/go/common"
+	"github.com/apps4bali/gatrabali-backend/common"
 	"github.com/fiberweb/pubsub"
 	"github.com/gofiber/fiber"
 )
