@@ -7,7 +7,7 @@ import (
 
 	"cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go"
-	"github.com/apps4bali/gatrabali-backend/common"
+	"github.com/apps4bali/gatrabali-backend/common/constant"
 	"google.golang.org/api/iterator"
 )
 
@@ -29,7 +29,7 @@ func (db *DB) GetFeeds(ctx context.Context) (*[]map[string]interface{}, error) {
 	}
 	defer client.Close()
 
-	iter := client.Collection(common.Feeds).Documents(ctx)
+	iter := client.Collection(constant.Feeds).Documents(ctx)
 	feeds := []map[string]interface{}{}
 	for {
 		doc, err := iter.Next()
@@ -54,7 +54,7 @@ func (db *DB) GetAllCategories(ctx context.Context) (*[]map[string]interface{}, 
 	}
 	defer client.Close()
 
-	iter := client.Collection(common.Categories).OrderBy("title", firestore.Asc).Documents(ctx)
+	iter := client.Collection(constant.Categories).OrderBy("title", firestore.Asc).Documents(ctx)
 	categories := []map[string]interface{}{}
 	for {
 		doc, err := iter.Next()

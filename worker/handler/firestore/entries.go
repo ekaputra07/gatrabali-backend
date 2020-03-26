@@ -9,6 +9,7 @@ import (
 
 	"cloud.google.com/go/firestore"
 	"cloud.google.com/go/pubsub"
+	"github.com/apps4bali/gatrabali-backend/common/constant"
 	"github.com/apps4bali/gatrabali-backend/common/types"
 	"google.golang.org/api/iterator"
 )
@@ -65,7 +66,7 @@ func notifySubscriber(
 	}
 
 	// Get the category
-	doc, err := firestoreClient.Collection(types.Categories).Doc(categoryID).Get(ctx)
+	doc, err := firestoreClient.Collection(constant.Categories).Doc(categoryID).Get(ctx)
 	if err != nil {
 		return fmt.Errorf("Category with ID=%v does not exists", categoryID)
 	}
