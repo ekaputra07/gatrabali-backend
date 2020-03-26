@@ -8,7 +8,8 @@ import (
 	"net/http"
 
 	"cloud.google.com/go/firestore"
-	"github.com/apps4bali/gatrabali-backend/common"
+	"github.com/apps4bali/gatrabali-backend/common/constant"
+	"github.com/apps4bali/gatrabali-backend/common/types"
 	"github.com/fiberweb/pubsub"
 	"github.com/gofiber/fiber"
 
@@ -23,7 +24,7 @@ func Handler(client *firestore.Client) func(*fiber.Ctx) {
 
 		log.Printf("Sync triggered with payload: %v\n", msg)
 
-		var payload *common.SyncPayload
+		var payload *types.SyncPayload
 		if err := json.Unmarshal(msg.Message.Data, &payload); err != nil {
 			c.Next(err)
 			return
@@ -34,17 +35,17 @@ func Handler(client *firestore.Client) func(*fiber.Ctx) {
 		}
 
 		switch *payload.Type {
-		case common.TypeCategory:
+		case constant.TypeCategory:
 			if err := service.StartCategorySync(ctx, client, payload); err != nil {
 				c.Next(err)
 				return
 			}
-		case common.TypeFeed:
+		case constant.TypeFeed:
 			if err := service.StartFeedSync(ctx, client, payload); err != nil {
 				c.Next(err)
 				return
 			}
-		case common.TypeEntry:
+		case constant.TypeEntry:
 			if err := service.StartEntrySync(ctx, client, payload); err != nil {
 				c.Next(err)
 				return

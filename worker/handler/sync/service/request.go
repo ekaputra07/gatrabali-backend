@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/apps4bali/gatrabali-backend/common"
-
 	"worker/config"
 )
 
@@ -26,7 +24,7 @@ func createGetRequest(path string) (*http.Request, error) {
 }
 
 // GetCategories calls /v1/categories
-func GetCategories() (*common.CategoryList, error) {
+func GetCategories() (*types.CategoryList, error) {
 	req, err := createGetRequest("/v1/categories")
 	if err != nil {
 		return nil, err
@@ -42,13 +40,13 @@ func GetCategories() (*common.CategoryList, error) {
 		return nil, fmt.Errorf("GetCategories() error status code: %v", res.StatusCode)
 	}
 
-	var categories common.CategoryList
+	var categories types.CategoryList
 	json.NewDecoder(res.Body).Decode(&categories)
 	return &categories, nil
 }
 
 // GetFeedIcon calls /v1/feeds/:FeedID/icon
-func GetFeedIcon(feedID int64) (*common.FeedIcon, error) {
+func GetFeedIcon(feedID int64) (*types.FeedIcon, error) {
 	req, err := createGetRequest(fmt.Sprintf("/v1/feeds/%v/icon", feedID))
 	if err != nil {
 		return nil, err
@@ -64,13 +62,13 @@ func GetFeedIcon(feedID int64) (*common.FeedIcon, error) {
 		return nil, fmt.Errorf("GetFeedIcon(%v) error status code: %v", feedID, res.StatusCode)
 	}
 
-	var icon common.FeedIcon
+	var icon types.FeedIcon
 	json.NewDecoder(res.Body).Decode(&icon)
 	return &icon, nil
 }
 
 // GetFeed calls /v1/feeds/:ID
-func GetFeed(id int64) (*common.Feed, error) {
+func GetFeed(id int64) (*types.Feed, error) {
 	req, err := createGetRequest(fmt.Sprintf("/v1/feeds/%v", id))
 	if err != nil {
 		return nil, err
@@ -86,7 +84,7 @@ func GetFeed(id int64) (*common.Feed, error) {
 		return nil, fmt.Errorf("GetFeed(%v) error status code: %v", id, res.StatusCode)
 	}
 
-	var mFeed common.MFeed
+	var mFeed types.MFeed
 	json.NewDecoder(res.Body).Decode(&mFeed)
 	feed := mFeed.ToFeed()
 
@@ -100,7 +98,7 @@ func GetFeed(id int64) (*common.Feed, error) {
 }
 
 // GetEntry calls /v1/entries/:ID
-func GetEntry(id int64) (*common.Entry, error) {
+func GetEntry(id int64) (*types.Entry, error) {
 	req, err := createGetRequest(fmt.Sprintf("/v1/entries/%v", id))
 	if err != nil {
 		return nil, err
@@ -116,7 +114,7 @@ func GetEntry(id int64) (*common.Entry, error) {
 		return nil, fmt.Errorf("GetEntry(%v) error status code: %v", id, res.StatusCode)
 	}
 
-	var mEntry common.MEntry
+	var mEntry types.MEntry
 	json.NewDecoder(res.Body).Decode(&mEntry)
 
 	entry, err := mEntry.ToEntry()
