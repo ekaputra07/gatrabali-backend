@@ -35,7 +35,10 @@ func Handler(firestoreClient *firestore.Client, pubsubClient *pubsub.Client) fun
 				return
 			}
 		case "responses":
-			c.Next()
+			if err := aggregateEntryResponse(ctx, firestoreClient, msg.Message.Data); err != nil {
+				c.Next(err)
+				return
+			}
 		}
 
 		c.SendStatus(http.StatusOK)

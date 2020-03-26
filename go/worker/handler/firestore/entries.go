@@ -14,7 +14,9 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-type data struct {
+// this is based PubSub data formate sent by Firesub
+// https://github.com/ekaputra07/firesub
+type entryData struct {
 	ID        string `json:"id"`
 	Timestamp string `json:"timestamp"`
 	Entry     *entry `json:"data"`
@@ -43,17 +45,16 @@ func notifySubscriber(
 	pubsubClient *pubsub.Client,
 	rawdata []byte) error {
 
-	var d *data
-
-	if err := json.Unmarshal(rawdata, &d); err != nil {
+	var data *entryData
+	if err := json.Unmarshal(rawdata, &data); err != nil {
 		return err
 	}
 
-	entryTitle := d.Entry.Title
-	entryID := strconv.FormatInt(d.Entry.ID, 10)
-	categoryID := strconv.FormatInt(d.Entry.CategoryID, 10)
-	feedID := strconv.FormatInt(d.Entry.FeedID, 10)
-	publishedAt := strconv.FormatInt(d.Entry.PublishedAt, 10)
+	entryTitle := data.Entry.Title
+	entryID := strconv.FormatInt(data.Entry.ID, 10)
+	categoryID := strconv.FormatInt(data.Entry.CategoryID, 10)
+	feedID := strconv.FormatInt(data.Entry.FeedID, 10)
+	publishedAt := strconv.FormatInt(data.Entry.PublishedAt, 10)
 
 	// overrides categoryID if feedID belongs to BaleBengong
 	baleBengongFeeds := []string{"33", "34", "35", "36", "37", "38", "39", "40"}
