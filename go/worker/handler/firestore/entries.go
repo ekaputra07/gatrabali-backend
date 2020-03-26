@@ -9,8 +9,7 @@ import (
 
 	"cloud.google.com/go/firestore"
 	"cloud.google.com/go/pubsub"
-	"github.com/apps4bali/gatrabali-backend/common/constant"
-	"github.com/apps4bali/gatrabali-backend/common/model"
+	"github.com/apps4bali/gatrabali-backend/go/common"
 	"google.golang.org/api/iterator"
 )
 
@@ -66,7 +65,7 @@ func notifySubscriber(
 	}
 
 	// Get the category
-	doc, err := firestoreClient.Collection(constant.Categories).Doc(categoryID).Get(ctx)
+	doc, err := firestoreClient.Collection(common.Categories).Doc(categoryID).Get(ctx)
 	if err != nil {
 		return fmt.Errorf("Category with ID=%v does not exists", categoryID)
 	}
@@ -75,7 +74,7 @@ func notifySubscriber(
 	pushTopic := pubsubClient.Topic("PushNotification")
 
 	// create message to publish to PushNotification topic.
-	pushData := model.PushNotificationPayload{
+	pushData := common.PushNotificationPayload{
 		Title: category["title"].(string),
 		Body:  entryTitle,
 		Data: map[string]string{

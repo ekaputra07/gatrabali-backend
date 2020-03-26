@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"cloud.google.com/go/firestore"
-	"github.com/apps4bali/gatrabali-backend/common/constant"
+	"github.com/apps4bali/gatrabali-backend/go/common"
 )
 
 const (
@@ -75,13 +75,13 @@ func aggregateEntryResponse(ctx context.Context, store *firestore.Client, rawdat
 
 // entryCollectionByCategory method is specific to BaliFeed app only
 func entryCollectionByCategory(categoryID int64) string {
-	c := constant.Entries
+	c := common.Entries
 	if categoryID == 11 {
-		c = constant.Kriminal
+		c = common.Kriminal
 	} else if categoryID == 12 {
-		c = constant.BaliUnited
+		c = common.BaliUnited
 	} else if categoryID > 12 {
-		c = constant.BaleBengong
+		c = common.BaleBengong
 	}
 	return c
 }

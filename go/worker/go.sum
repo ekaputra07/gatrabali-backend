@@ -28,6 +28,7 @@ github.com/Joker/jade v1.0.0 h1:lOCEPvTAtWfLpSZYMOv/g44MGQFAolbKh2khHHGu0Kc=
 github.com/Joker/jade v1.0.0/go.mod h1:efZIdO0py/LtcJRSa/j2WEklMSAw84WV0zZVMxNToB8=
 github.com/apps4bali/gatrabali-backend v0.0.0-20190810155759-e315937f2147 h1:D210N4MUXWjvxzBTxOv/5fy2pJPdQs/28bWoZaTQS/g=
 github.com/apps4bali/gatrabali-backend v0.0.0-20190810155759-e315937f2147/go.mod h1:Pz7G9m8+W2+D4mEhH72vNub0z4JQkJQ+ZtJOIJwU0yM=
+github.com/apps4bali/gatrabali-backend v1.0.0 h1:s98njbWz5bOc4t3e5sBDSfxt5FvV8rFOMNRZUF/dO4Q=
 github.com/aymerick/raymond v2.0.2+incompatible h1:VEp3GpgdAnv9B2GFyTvqgcKvY+mfKMjPOA3SbKLtnU0=
 github.com/aymerick/raymond v2.0.2+incompatible/go.mod h1:osfaiScAUVup+UC9Nfq76eWqDhXlp+4UYaA8uhTBO6g=
 github.com/cbroglie/mustache v1.0.1 h1:ivMg8MguXq/rrz2eu3tw6g3b16+PQhoTn6EZAhst2mw=
