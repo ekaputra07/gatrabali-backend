@@ -22,7 +22,7 @@ func Handler(client *firestore.Client) func(*fiber.Ctx) {
 		ctx := context.Background()
 		msg := c.Locals(pubsub.LocalsKey).(*pubsub.Message)
 
-		log.Printf("Sync triggered with payload: %v\n", msg)
+		log.Printf("Sync triggered with payload: %s\n", msg)
 
 		var payload *types.SyncPayload
 		if err := json.Unmarshal(msg.Message.Data, &payload); err != nil {

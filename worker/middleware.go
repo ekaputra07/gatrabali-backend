@@ -12,7 +12,7 @@ import (
 func softErrorHandler() func(*fiber.Ctx) {
 	return func(c *fiber.Ctx) {
 		if c.Error() != nil {
-			log.Println("ERROR]", c.Error())
+			log.Println("[ERROR]", c.Error())
 			c.SendStatus(http.StatusOK)
 		}
 		c.Next()
