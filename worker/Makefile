@@ -1,6 +1,6 @@
 export GOOGLE_APPLICATION_CREDENTIALS=../service-account.json
 export GCP_PROJECT=
-export SERVICE_ID=
+export SERVICE_NAME=
 export SERVICE_PORT=8080
 export SERVICE_VERSION=1.0.0
 export SERVICE_ACCOUNT_EMAIL=service@your-project.iam.gserviceaccount.com'
@@ -20,7 +20,7 @@ gcloud-deploy:
 	gcloud builds submit \
 	--config clouddeploy.yml \
 	--substitutions=TAG_NAME=$(SERVICE_VERSION)\
-	,_SERVICE_ID=$(SERVICE_ID)\
+	,_SERVICE_NAME=$(SERVICE_NAME)\
 	,_SERVICE_ACCOUNT_EMAIL=$(SERVICE_ACCOUNT_EMAIL)
 	,_MINIFLUX_HOST=$(MINIFLUX_HOST)\
 	,_MINIFLUX_USER=$(MINIFLUX_USER)\
