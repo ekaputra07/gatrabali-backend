@@ -15,20 +15,12 @@ run:
 test:
 	go test -cover
 
-gcloud-build:
-	gcloud config set project $(GCP_PROJECT)
-	gcloud builds submit \
-	--config cloudbuild.yml \
-	--substitutions=TAG_NAME=$(SERVICE_VERSION)\
-	,_SERVICE_ID=$(SERVICE_ID)
-
 gcloud-deploy:
 	gcloud config set project $(GCP_PROJECT)
 	gcloud builds submit \
 	--config clouddeploy.yml \
 	--substitutions=TAG_NAME=$(SERVICE_VERSION)\
 	,_SERVICE_ID=$(SERVICE_ID)\
-	,_REV_SUFFIX=$(SERVICE_VERSION)\
 	,_SERVICE_ACCOUNT_EMAIL=$(SERVICE_ACCOUNT_EMAIL)
 	,_MINIFLUX_HOST=$(MINIFLUX_HOST)\
 	,_MINIFLUX_USER=$(MINIFLUX_USER)\
