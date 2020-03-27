@@ -3,7 +3,7 @@ package config
 import "os"
 
 // ServicePort ...
-var ServicePort = os.Getenv("PORT")
+var ServicePort = os.Getenv("SERVICE_PORT")
 
 // MinifluxHost ...
 var MinifluxHost = os.Getenv("MINIFLUX_HOST")
