@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 
 	"cloud.google.com/go/firestore"
@@ -21,8 +20,6 @@ func Handler(client *firestore.Client) func(*fiber.Ctx) {
 	return func(c *fiber.Ctx) {
 		ctx := context.Background()
 		msg := c.Locals(pubsub.LocalsKey).(*pubsub.Message)
-
-		log.Printf("Sync triggered with payload: %s\n", msg)
 
 		var payload *types.SyncPayload
 		if err := json.Unmarshal(msg.Message.Data, &payload); err != nil {
