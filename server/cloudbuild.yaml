@@ -19,6 +19,8 @@ steps:
       - 'us-central1'
       - '--platform'
       - 'managed'
+      - '--concurrency'
+      - '10' # allow only 10 requests at the same time (total memory 256M, avg. 25M/request)
       - '--allow-unauthenticated' # publicly accessible
       - '--service-account'
       - '$_SERVICE_ACCOUNT_EMAIL'
