@@ -64,9 +64,9 @@ func aggregateEntryResponse(ctx context.Context, store *firestore.Client, rawdat
 	if (data.Before != nil) && (data.After == nil) {
 		switch data.After.Type {
 		case typeComment:
-			return aggregateCommentDelete(ctx, store, data.After)
+			return aggregateCommentDelete(ctx, store, data.Before)
 		case typeReaction:
-			return aggregateReactionDelete(ctx, store, data.After)
+			return aggregateReactionDelete(ctx, store, data.Before)
 		}
 	}
 
