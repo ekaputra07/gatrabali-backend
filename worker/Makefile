@@ -3,6 +3,7 @@ export GCP_PROJECT=
 export SERVICE_NAME=
 export SERVICE_PORT=8080
 export SERVICE_ACCOUNT_EMAIL=service@your-project.iam.gserviceaccount.com'
+export PUSH_NOTIFICATION_TOPIC=PushNotification
 export MINIFLUX_HOST=
 export MINIFLUX_USER=
 export MINIFLUX_PASS=
