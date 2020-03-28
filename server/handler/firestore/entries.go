@@ -58,19 +58,21 @@ func notifySubscriber(
 	feedID := strconv.FormatInt(data.Entry.FeedID, 10)
 	publishedAt := strconv.FormatInt(data.Entry.PublishedAt, 10)
 
-	// overrides categoryID if feedID belongs to BaleBengong
+	// overrides subscriberCategory if feedID belongs to BaleBengong
+	// for bale bengong subscriber they subscribes on a separate category called "balebengong"
+	subscriberCategory := categoryID
 	baleBengongFeeds := []string{"33", "34", "35", "36", "37", "38", "39", "40"}
 	for _, ID := range baleBengongFeeds {
 		if ID == feedID {
-			categoryID = "balebengong"
+			subscriberCategory = "balebengong"
 			break
 		}
 	}
 
 	// Get the category
-	doc, err := firestoreClient.Collection(constant.Categories).Doc(categoryID).Get(ctx)
+	doc, err := firestoreClient.Collection(constant.Categories).Doc(subscriberCategory).Get(ctx)
 	if err != nil {
-		return fmt.Errorf("Category with ID=%v does not exists", categoryID)
+		return fmt.Errorf("Category with ID=%v does not exists", subscriberCategory)
 	}
 
 	category := doc.Data()
@@ -85,7 +87,7 @@ func notifySubscriber(
 			"data_type":      "entry",
 			"entry_title":    entryTitle,
 			"entry_id":       entryID,
-			"category_id":    categoryID,
+			"category_id":    categoryID, // original category ID
 			"category_title": category["title"].(string),
 			"feed_id":        feedID,
 			"published_at":   publishedAt,
@@ -93,14 +95,13 @@ func notifySubscriber(
 	}
 
 	// get subscribers
-	iter := firestoreClient.Collection(fmt.Sprintf("categories/%v/subscribers", categoryID)).Documents(ctx)
+	iter := firestoreClient.Collection(fmt.Sprintf("categories/%v/subscribers", subscriberCategory)).Documents(ctx)
 	for {
 		doc, err := iter.Next()
 		if err == iterator.Done {
 			break
 		}
 		if err != nil {
-			log.Println(err)
 			continue
 		}
 
@@ -111,7 +112,7 @@ func notifySubscriber(
 		// if user does not exists, delete them from subscriber list.
 		if !isUserExists(ctx, firestoreClient, pushData.UserID) {
 			if _, err := doc.Ref.Delete(ctx); err != nil {
-				log.Printf("Failed to delete subscriber %v from category %v\n", pushData.UserID, categoryID)
+				log.Printf("Failed to delete subscriber %v from category %v\n", pushData.UserID, subscriberCategory)
 			}
 			continue
 		}
