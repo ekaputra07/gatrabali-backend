@@ -6,20 +6,23 @@ import (
 	"errors"
 	"net/http"
 
-	"cloud.google.com/go/firestore"
 	"github.com/apps4bali/gatrabali-backend/common/constant"
 	"github.com/apps4bali/gatrabali-backend/common/types"
 	"github.com/fiberweb/pubsub"
 	"github.com/gofiber/fiber"
 
+	"worker/firebase"
 	"worker/handler/sync/service"
 )
 
 // Handler sync data from Miniflux to Firestore
-func Handler(client *firestore.Client) func(*fiber.Ctx) {
+func Handler(ctx context.Context, fb *firebase.Firebase) func(*fiber.Ctx) {
 	return func(c *fiber.Ctx) {
-		ctx := context.Background()
-		msg := c.Locals(pubsub.LocalsKey).(*pubsub.Message)
+		msg, ok := c.Locals(pubsub.LocalsKey).(*pubsub.Message)
+		if !ok {
+			c.Next(errors.New("unable to retrieve PubSub message from c.Locals"))
+			return
+		}
 
 		var payload *types.SyncPayload
 		if err := json.Unmarshal(msg.Message.Data, &payload); err != nil {
@@ -31,19 +34,28 @@ func Handler(client *firestore.Client) func(*fiber.Ctx) {
 			return
 		}
 
+		// load Firestore client
+		firestore, err := fb.FirestoreClient(ctx)
+		if err != nil {
+			c.Next(err)
+			return
+		}
+
+		ctx := context.Background() // request ctx
+
 		switch *payload.Type {
 		case constant.TypeCategory:
-			if err := service.StartCategorySync(ctx, client, payload); err != nil {
+			if err := service.StartCategorySync(ctx, firestore, payload); err != nil {
 				c.Next(err)
 				return
 			}
 		case constant.TypeFeed:
-			if err := service.StartFeedSync(ctx, client, payload); err != nil {
+			if err := service.StartFeedSync(ctx, firestore, payload); err != nil {
 				c.Next(err)
 				return
 			}
 		case constant.TypeEntry:
-			if err := service.StartEntrySync(ctx, client, payload); err != nil {
+			if err := service.StartEntrySync(ctx, firestore, payload); err != nil {
 				c.Next(err)
 				return
 			}

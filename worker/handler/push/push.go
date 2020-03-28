@@ -13,14 +13,18 @@ import (
 	"github.com/apps4bali/gatrabali-backend/common/types"
 	"github.com/fiberweb/pubsub"
 	"github.com/gofiber/fiber"
+
+	"worker/firebase"
 )
 
 // Handler handle sending push notification
-func Handler(firestoreClient *firestore.Client, messagingClient *messaging.Client) func(*fiber.Ctx) {
+func Handler(ctx context.Context, fb *firebase.Firebase) func(*fiber.Ctx) {
 	return func(c *fiber.Ctx) {
-		ctx := context.Background()
-		msg := c.Locals(pubsub.LocalsKey).(*pubsub.Message)
-		log.Printf("SendPushNotification triggered with payload: %v\n", msg)
+		msg, ok := c.Locals(pubsub.LocalsKey).(*pubsub.Message)
+		if !ok {
+			c.Next(errors.New("unable to retrieve PubSub message from c.Locals"))
+			return
+		}
 
 		// validate payload
 		var payload types.PushNotificationPayload
@@ -32,6 +36,21 @@ func Handler(firestoreClient *firestore.Client, messagingClient *messaging.Clien
 			c.Next(errors.New("Invalid message payload: missing user_id, title or body"))
 			return
 		}
+
+		// load clients
+		firestoreClient, err := fb.FirestoreClient(ctx)
+		if err != nil {
+			c.Next(err)
+			return
+		}
+		messagingClient, err := fb.MessagingClient(ctx)
+		if err != nil {
+			c.Next(err)
+			return
+		}
+
+		// preparing to push
+		ctx := context.Background() // request ctx
 
 		doc, err := firestoreClient.Collection("users").Doc(payload.UserID).Get(ctx)
 		if err != nil {
