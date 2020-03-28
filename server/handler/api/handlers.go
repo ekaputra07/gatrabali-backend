@@ -54,7 +54,6 @@ func handleEntries(ctx context.Context, fb *firebase.Firebase, collection string
 			cur = 0
 		}
 
-		fmt.Println(cat, lim, cur)
 		// get firestore
 		firestore, err := fb.FirestoreClient(ctx)
 		if err != nil {
