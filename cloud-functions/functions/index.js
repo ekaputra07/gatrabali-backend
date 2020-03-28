@@ -1,5 +1,5 @@
 const firesub = require("firesub");
-const topic = "firestore_events";
+const topic = "FirestoreEvents";
 
 /**
  * Below are all Firestore triggered events handler, instead of process them directly

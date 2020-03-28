@@ -48,7 +48,7 @@ func aggregateEntryResponse(ctx context.Context, store *firestore.Client, rawdat
 		case typeComment:
 			return aggregateCommentCreate(ctx, store, data.After)
 		case typeReaction:
-			return nil
+			return aggregateReactionCreate(ctx, store, data.After)
 		}
 	}
 
@@ -56,7 +56,7 @@ func aggregateEntryResponse(ctx context.Context, store *firestore.Client, rawdat
 	// only process REACTION update, comment update does not affect comments count.
 	if (data.Before != nil) && (data.After != nil) {
 		if data.After.Type == typeReaction {
-			return nil
+			return aggregateReactionUpdate(ctx, store, data.Before, data.After)
 		}
 	}
 
@@ -66,7 +66,7 @@ func aggregateEntryResponse(ctx context.Context, store *firestore.Client, rawdat
 		case typeComment:
 			return aggregateCommentDelete(ctx, store, data.After)
 		case typeReaction:
-			return nil
+			return aggregateReactionDelete(ctx, store, data.After)
 		}
 	}
 
