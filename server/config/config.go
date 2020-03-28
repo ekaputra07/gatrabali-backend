@@ -20,6 +20,9 @@ var GCPProject = os.Getenv("GCP_PROJECT")
 // PushNotificationTopic ...
 var PushNotificationTopic = os.Getenv("PUSH_NOTIFICATION_TOPIC")
 
+// PubSubAPIKey ...
+var PubSubAPIKey = os.Getenv("PUBSUB_API_KEY")
+
 func init() {
 	if ServicePort == "" {
 		ServicePort = "8080"
