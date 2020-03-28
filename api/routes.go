@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/apps4bali/gatrabali-backend/common/constant"
+	"server/common/constant"
 	"github.com/gorilla/mux"
 )
 

@@ -6,11 +6,11 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/apps4bali/gatrabali-backend/common/constant"
-	"github.com/apps4bali/gatrabali-backend/common/types"
 	"github.com/fiberweb/pubsub"
 	"github.com/gofiber/fiber"
 
+	"server/common/constant"
+	"server/common/types"
 	"server/firebase"
 	"server/handler/sync/service"
 )

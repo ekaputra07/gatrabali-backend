@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/apps4bali/gatrabali-backend/common/constant"
+	"server/common/constant"
 	"github.com/gorilla/mux"
 )
 
@@ -22,7 +22,7 @@ func (s *server) SetServerError(w http.ResponseWriter, message string) {
 
 func (s *server) HandleIndex() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "Gatra Bali Backend: https://github.com/apps4bali/gatrabali-backend")
+		fmt.Fprint(w, "Gatra Bali Backend: https://server")
 	}
 }
 

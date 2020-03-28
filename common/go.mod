@@ -1,3 +1,3 @@
-module github.com/apps4bali/gatrabali-backend/common
+module server/common
 
 go 1.11

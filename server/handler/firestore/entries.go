@@ -9,10 +9,10 @@ import (
 
 	"cloud.google.com/go/firestore"
 	"cloud.google.com/go/pubsub"
-	"github.com/apps4bali/gatrabali-backend/common/constant"
-	"github.com/apps4bali/gatrabali-backend/common/types"
 	"google.golang.org/api/iterator"
 
+	"server/common/constant"
+	"server/common/types"
 	"server/config"
 )
 

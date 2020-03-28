@@ -7,7 +7,7 @@ import (
 
 	"cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go"
-	"github.com/apps4bali/gatrabali-backend/common/constant"
+	"server/common/constant"
 	"google.golang.org/api/iterator"
 )
 
