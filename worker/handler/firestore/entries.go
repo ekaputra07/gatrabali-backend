@@ -12,6 +12,8 @@ import (
 	"github.com/apps4bali/gatrabali-backend/common/constant"
 	"github.com/apps4bali/gatrabali-backend/common/types"
 	"google.golang.org/api/iterator"
+
+	"worker/config"
 )
 
 // this is based PubSub data formate sent by Firesub
@@ -72,7 +74,7 @@ func notifySubscriber(
 	}
 
 	category := doc.Data()
-	pushTopic := pubsubClient.Topic("PushNotification")
+	pushTopic := pubsubClient.Topic(config.PushNotificationTopic)
 
 	// create message to publish to PushNotification topic.
 	pushData := types.PushNotificationPayload{
