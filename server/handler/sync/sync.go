@@ -11,8 +11,8 @@ import (
 	"github.com/fiberweb/pubsub"
 	"github.com/gofiber/fiber"
 
-	"worker/firebase"
-	"worker/handler/sync/service"
+	"server/firebase"
+	"server/handler/sync/service"
 )
 
 // Handler sync data from Miniflux to Firestore

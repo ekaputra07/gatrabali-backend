@@ -1,4 +1,4 @@
-module worker
+module server
 
 go 1.13
 

@@ -14,7 +14,7 @@ import (
 	"github.com/fiberweb/pubsub"
 	"github.com/gofiber/fiber"
 
-	"worker/firebase"
+	"server/firebase"
 )
 
 // Handler handle sending push notification

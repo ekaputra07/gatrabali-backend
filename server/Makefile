@@ -10,7 +10,7 @@ export MINIFLUX_PASS=
 
 
 run:
-	go build -o worker; ./worker
+	go build -o server; ./server
 
 test:
 	go test -cover

@@ -13,7 +13,7 @@ import (
 	"github.com/apps4bali/gatrabali-backend/common/types"
 	"google.golang.org/api/iterator"
 
-	"worker/config"
+	"server/config"
 )
 
 // this is based PubSub data formate sent by Firesub

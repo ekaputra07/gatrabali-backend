@@ -8,7 +8,7 @@ import (
 
 	"github.com/apps4bali/gatrabali-backend/common/types"
 
-	"worker/config"
+	"server/config"
 )
 
 // create client with default 5secs timeout

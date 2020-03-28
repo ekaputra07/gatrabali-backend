@@ -8,8 +8,8 @@ import (
 	"github.com/fiberweb/pubsub"
 	"github.com/gofiber/fiber"
 
-	"worker/config"
-	"worker/firebase"
+	"server/config"
+	"server/firebase"
 )
 
 // Handler dispatch Firestore events

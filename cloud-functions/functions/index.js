@@ -3,7 +3,7 @@ const topic = "FirestoreEvents";
 
 /**
  * Below are all Firestore triggered events handler, instead of process them directly
- * we publish them to a PubSub topic, and our worker service will then handle and process them.
+ * we publish them to a PubSub topic, and our server will then handle and process them.
  *
  * Please note that we're only using single topic here since the event won't be that much.
  * For better scalability please consider using separate topic.
