@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -20,6 +21,17 @@ func setCacheControl(c *fiber.Ctx, maxAge, smaxAge int64) {
 	c.Set("Cache-Control", fmt.Sprintf("public, max-age=%v, s-maxage=%v", maxAge, smaxAge))
 }
 
+// this is a workaround to Fiber's c.JSON() content-type doesn't include charset.
+func sendJSON(c *fiber.Ctx, body interface{}) {
+	j, err := json.Marshal(body)
+	if err != nil {
+		c.Next(err)
+		return
+	}
+	c.Set("Content-type", "application/json; charset=utf-8")
+	c.Send(j)
+}
+
 func handleFeeds(ctx context.Context, fb *firebase.Firebase) func(*fiber.Ctx) {
 	return func(c *fiber.Ctx) {
 		// get firestore
@@ -33,7 +45,7 @@ func handleFeeds(ctx context.Context, fb *firebase.Firebase) func(*fiber.Ctx) {
 		if len(feeds) > 0 {
 			setCacheControl(c, defaultMaxAge, defaultSmaxAge)
 		}
-		c.JSON(feeds)
+		sendJSON(c, feeds)
 	}
 }
 
@@ -76,7 +88,7 @@ func handleEntries(ctx context.Context, fb *firebase.Firebase, collection string
 		if len(entries) > 0 {
 			setCacheControl(c, defaultMaxAge, defaultSmaxAge)
 		}
-		c.JSON(entries)
+		sendJSON(c, entries)
 	}
 }
 
@@ -96,6 +108,6 @@ func handleEntry(ctx context.Context, fb *firebase.Firebase, collection string) 
 			return
 		}
 		setCacheControl(c, defaultMaxAge, 86400) // 24 hr since individual entry won't change much
-		c.JSON(entry)
+		sendJSON(c, entry)
 	}
 }
