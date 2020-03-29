@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -21,15 +20,11 @@ func setCacheControl(c *fiber.Ctx, maxAge, smaxAge int64) {
 	c.Set("Cache-Control", fmt.Sprintf("public, max-age=%v, s-maxage=%v", maxAge, smaxAge))
 }
 
-// this is a workaround to Fiber's c.JSON() content-type doesn't include charset.
+// this is a workaround to Fiber's c.JSON() content-type doesn't include charset by default.
+// https://github.com/gofiber/fiber/issues/248
 func sendJSON(c *fiber.Ctx, body interface{}) {
-	j, err := json.Marshal(body)
-	if err != nil {
-		c.Next(err)
-		return
-	}
+	c.JSON(body)
 	c.Set("Content-type", "application/json; charset=utf-8")
-	c.Send(j)
 }
 
 func handleFeeds(ctx context.Context, fb *firebase.Firebase) func(*fiber.Ctx) {
