@@ -109,6 +109,7 @@ func entryCollectionByCategory(categoryID int64) string {
 func deleteCommentReplies(ctx context.Context, client *firestore.Client, ID string, resp *response) error {
 	// top level comment, delete all replies
 	if resp.ThreadID == "" {
+		fmt.Println("> IS THREAD")
 		iter := client.Collection(constant.EntryResponses).Where("thread_id", "==", ID).Documents(ctx)
 		snaps, err := iter.GetAll()
 		if err != nil {
@@ -117,6 +118,7 @@ func deleteCommentReplies(ctx context.Context, client *firestore.Client, ID stri
 		if len(snaps) > 0 {
 			batch := client.Batch()
 			for _, snap := range snaps {
+				fmt.Println(">", snap.Ref.Path)
 				batch.Delete(snap.Ref)
 			}
 			_, err := batch.Commit(ctx)
@@ -126,6 +128,7 @@ func deleteCommentReplies(ctx context.Context, client *firestore.Client, ID stri
 
 	// a reply, delete all replies (childs) to this reply
 	if resp.ThreadID != "" {
+		fmt.Println("> IS REPLY")
 		iter := client.Collection(constant.EntryResponses).Where("parent_id", "==", ID).Documents(ctx)
 		snaps, err := iter.GetAll()
 		if err != nil {
@@ -134,6 +137,7 @@ func deleteCommentReplies(ctx context.Context, client *firestore.Client, ID stri
 		if len(snaps) > 0 {
 			batch := client.Batch()
 			for _, snap := range snaps {
+				fmt.Println(">", snap.Ref.Path)
 				batch.Delete(snap.Ref)
 			}
 			_, err := batch.Commit(ctx)
