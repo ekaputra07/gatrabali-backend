@@ -109,7 +109,6 @@ func entryCollectionByCategory(categoryID int64) string {
 func deleteCommentReplies(ctx context.Context, client *firestore.Client, ID string, resp *response) error {
 	// top level comment, delete all replies
 	if resp.ThreadID == "" {
-		fmt.Println("> IS THREAD")
 		iter := client.Collection(constant.EntryResponses).Where("thread_id", "==", ID).Documents(ctx)
 		snaps, err := iter.GetAll()
 		if err != nil {
@@ -118,7 +117,6 @@ func deleteCommentReplies(ctx context.Context, client *firestore.Client, ID stri
 		if len(snaps) > 0 {
 			batch := client.Batch()
 			for _, snap := range snaps {
-				fmt.Println(">", snap.Ref.Path)
 				batch.Delete(snap.Ref)
 			}
 			_, err := batch.Commit(ctx)
@@ -128,7 +126,6 @@ func deleteCommentReplies(ctx context.Context, client *firestore.Client, ID stri
 
 	// a reply, delete all replies (childs) to this reply
 	if resp.ThreadID != "" {
-		fmt.Println("> IS REPLY")
 		iter := client.Collection(constant.EntryResponses).Where("parent_id", "==", ID).Documents(ctx)
 		snaps, err := iter.GetAll()
 		if err != nil {
@@ -137,7 +134,6 @@ func deleteCommentReplies(ctx context.Context, client *firestore.Client, ID stri
 		if len(snaps) > 0 {
 			batch := client.Batch()
 			for _, snap := range snaps {
-				fmt.Println(">", snap.Ref.Path)
 				batch.Delete(snap.Ref)
 			}
 			_, err := batch.Commit(ctx)
@@ -175,17 +171,11 @@ func aggregateComment(ctx context.Context, client *firestore.Client, resp *respo
 			var err error
 
 			// get direct parent
-			parent, err = client.Collection(constant.EntryResponses).Doc(resp.ParentID).Get(ctx)
-			if err != nil {
-				return err
-			}
+			parent, _ = client.Collection(constant.EntryResponses).Doc(resp.ParentID).Get(ctx)
 
 			// a reply to a reply, get level 0 parent (thread)
 			if resp.ParentID != resp.ThreadID {
-				thread, err = client.Collection(constant.EntryResponses).Doc(resp.ThreadID).Get(ctx)
-				if err != nil {
-					return err
-				}
+				thread, _ = client.Collection(constant.EntryResponses).Doc(resp.ThreadID).Get(ctx)
 			}
 
 			// if thread found, increment reply_count
@@ -194,13 +184,16 @@ func aggregateComment(ctx context.Context, client *firestore.Client, resp *respo
 				Path:  "reply_count",
 				Value: firestore.Increment(incrementValue),
 			}}
-			if thread != nil {
-				err = tx.Update(thread.Ref, update)
+			// update reply count on parent
+			if parent != nil {
+				err = tx.Update(parent.Ref, update)
 				if err != nil {
 					return err
 				}
-			} else {
-				err = tx.Update(parent.Ref, update)
+			}
+			// update reply count on thread
+			if thread != nil {
+				err = tx.Update(thread.Ref, update)
 				if err != nil {
 					return err
 				}
@@ -208,7 +201,7 @@ func aggregateComment(ctx context.Context, client *firestore.Client, resp *respo
 
 			// TODO: Notify parent author
 			// if failed should not failed the transaction.
-			if (incrementValue > 0) && (resp.UserID != parent.Data()["user_id"].(string)) {
+			if (incrementValue > 0) && (parent != nil) && (resp.UserID != parent.Data()["user_id"].(string)) {
 				fmt.Println("TODO: send push!")
 			}
 		}
