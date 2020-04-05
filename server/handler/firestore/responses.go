@@ -77,13 +77,11 @@ func aggregateEntryResponse(ctx context.Context, store *firestore.Client, rawdat
 			// aggregator
 			err := aggregateComment(ctx, store, data.Before, -1)
 			if err != nil {
-				fmt.Println("AGG COMMENT -", err)
 				return err
 			}
 			// delete replies if any
 			err = deleteCommentReplies(ctx, store, data.ID, data.Before)
 			if err != nil {
-				fmt.Println("DEL COMMENT -", err)
 				return err
 			}
 		case typeReaction:
@@ -173,11 +171,17 @@ func aggregateComment(ctx context.Context, client *firestore.Client, resp *respo
 			var err error
 
 			// get direct parent
-			parent, _ = client.Collection(constant.EntryResponses).Doc(resp.ParentID).Get(ctx)
+			parent, err = client.Collection(constant.EntryResponses).Doc(resp.ParentID).Get(ctx)
+			if err != nil {
+				parent = nil
+			}
 
 			// a reply to a reply, get level 0 parent (thread)
 			if resp.ParentID != resp.ThreadID {
 				thread, _ = client.Collection(constant.EntryResponses).Doc(resp.ThreadID).Get(ctx)
+				if err != nil {
+					thread = nil
+				}
 			}
 
 			// if thread found, increment reply_count
