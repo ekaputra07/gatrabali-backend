@@ -74,7 +74,16 @@ func aggregateEntryResponse(ctx context.Context, store *firestore.Client, rawdat
 	if (data.Before != nil) && (data.After == nil) {
 		switch data.Before.Type {
 		case typeComment:
-			return aggregateComment(ctx, store, data.Before, -1)
+			// aggregator
+			err := aggregateComment(ctx, store, data.Before, -1)
+			if err != nil {
+				return err
+			}
+			// delete replies if any
+			err = deleteCommentReplies(ctx, store, data.ID, data.Before)
+			if err != nil {
+				return err
+			}
 		case typeReaction:
 			return aggregateReactionCreateDelete(ctx, store, data.Before, -1)
 		}
@@ -96,6 +105,45 @@ func entryCollectionByCategory(categoryID int64) string {
 	return c
 }
 
+// deleteCommentReplies deletes all replies for this comment
+func deleteCommentReplies(ctx context.Context, client *firestore.Client, ID string, resp *response) error {
+	// top level comment, delete all replies
+	if resp.ThreadID == "" {
+		iter := client.Collection(constant.EntryResponses).Where("thread_id", "==", ID).Documents(ctx)
+		snaps, err := iter.GetAll()
+		if err != nil {
+			return err
+		}
+		if len(snaps) > 0 {
+			batch := client.Batch()
+			for _, snap := range snaps {
+				batch.Delete(snap.Ref)
+			}
+			_, err := batch.Commit(ctx)
+			return err
+		}
+	}
+
+	// a reply, delete all replies (childs) to this reply
+	if resp.ThreadID != "" {
+		iter := client.Collection(constant.EntryResponses).Where("parent_id", "==", ID).Documents(ctx)
+		snaps, err := iter.GetAll()
+		if err != nil {
+			return err
+		}
+		if len(snaps) > 0 {
+			batch := client.Batch()
+			for _, snap := range snaps {
+				batch.Delete(snap.Ref)
+			}
+			_, err := batch.Commit(ctx)
+			return err
+		}
+	}
+
+	return nil
+}
+
 // -- comment aggregation
 func aggregateComment(ctx context.Context, client *firestore.Client, resp *response, incrementValue int) error {
 	entryID := strconv.FormatInt(resp.EntryID, 10)
@@ -104,6 +152,16 @@ func aggregateComment(ctx context.Context, client *firestore.Client, resp *respo
 	// run inside a transaction
 	return client.RunTransaction(ctx, func(ctx context.Context, tx *firestore.Transaction) error {
 		// -- transaction start
+
+		// update entry comment count
+		entry := client.Collection(entryCollectionByCategory(categoryID)).Doc(entryID)
+		update := []firestore.Update{{
+			Path:  "comment_count",
+			Value: firestore.Increment(incrementValue),
+		}}
+		if err := tx.Update(entry, update); err != nil {
+			return err
+		}
 
 		// if has parent_id and thread_id
 		if resp.ParentID != "" && resp.ThreadID != "" {
@@ -151,15 +209,8 @@ func aggregateComment(ctx context.Context, client *firestore.Client, resp *respo
 			}
 		}
 
-		// update entry comment count
-		entry := client.Collection(entryCollectionByCategory(categoryID)).Doc(entryID)
-		update := []firestore.Update{{
-			Path:  "comment_count",
-			Value: firestore.Increment(incrementValue),
-		}}
-		return tx.Update(entry, update)
-
 		// -- transaction end
+		return nil
 	})
 }
 
