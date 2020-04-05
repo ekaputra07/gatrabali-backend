@@ -26,15 +26,24 @@ type responseData struct {
 	After     *response `json:"after"`
 }
 
+type user struct {
+	ID     string `json:"id"`
+	Name   string `json:"name"`
+	Avatar string `json:"avatar"`
+}
+
 type response struct {
 	UserID          string `json:"user_id"`
 	Type            string `json:"type"`
 	EntryID         int64  `json:"entry_id"`
 	EntryCategoryID int64  `json:"entry_category_id"`
 	EntryFeedID     int64  `json:"entry_feed_id"`
-	ParentID        string `json:"parent_id"`
+	ParentID        string `json:"parent_id"` // level 0 or level n
+	ThreadID        string `json:"thread_id"` // level 0
 	Reaction        string `json:"reaction"`
 	Comment         string `json:"comment"`
+	Entry           entry  `json:"entry"`
+	User            user   `json:"user"`
 }
 
 func aggregateEntryResponse(ctx context.Context, store *firestore.Client, rawdata []byte) error {
@@ -47,9 +56,9 @@ func aggregateEntryResponse(ctx context.Context, store *firestore.Client, rawdat
 	if (data.Before == nil) && (data.After != nil) {
 		switch data.After.Type {
 		case typeComment:
-			return aggregateCommentCreate(ctx, store, data.After)
+			return aggregateComment(ctx, store, data.After, 1)
 		case typeReaction:
-			return aggregateReactionCreate(ctx, store, data.After)
+			return aggregateReactionCreateDelete(ctx, store, data.After, 1)
 		}
 	}
 
@@ -65,9 +74,9 @@ func aggregateEntryResponse(ctx context.Context, store *firestore.Client, rawdat
 	if (data.Before != nil) && (data.After == nil) {
 		switch data.Before.Type {
 		case typeComment:
-			return aggregateCommentDelete(ctx, store, data.Before)
+			return aggregateComment(ctx, store, data.Before, -1)
 		case typeReaction:
-			return aggregateReactionDelete(ctx, store, data.Before)
+			return aggregateReactionCreateDelete(ctx, store, data.Before, -1)
 		}
 	}
 
@@ -88,39 +97,81 @@ func entryCollectionByCategory(categoryID int64) string {
 }
 
 // -- comment aggregation
-func aggregateCommentCreate(ctx context.Context, client *firestore.Client, resp *response) error {
+func aggregateComment(ctx context.Context, client *firestore.Client, resp *response, incrementValue int) error {
 	entryID := strconv.FormatInt(resp.EntryID, 10)
 	categoryID := resp.EntryCategoryID
 
-	update := []firestore.Update{{
-		Path:  "comment_count",
-		Value: firestore.Increment(1),
-	}}
-	_, err := client.Collection(entryCollectionByCategory(categoryID)).Doc(entryID).Update(ctx, update)
-	return err
-}
+	// run inside a transaction
+	return client.RunTransaction(ctx, func(ctx context.Context, tx *firestore.Transaction) error {
+		// -- transaction start
 
-func aggregateCommentDelete(ctx context.Context, client *firestore.Client, resp *response) error {
-	entryID := strconv.FormatInt(resp.EntryID, 10)
-	categoryID := resp.EntryCategoryID
+		// if has parent_id and thread_id
+		if resp.ParentID != "" && resp.ThreadID != "" {
 
-	update := []firestore.Update{{
-		Path:  "comment_count",
-		Value: firestore.Increment(-1),
-	}}
-	_, err := client.Collection(entryCollectionByCategory(categoryID)).Doc(entryID).Update(ctx, update)
-	return err
+			var parent *firestore.DocumentSnapshot
+			var thread *firestore.DocumentSnapshot
+			var err error
+
+			// get direct parent
+			parent, err = client.Collection(constant.EntryResponses).Doc(resp.ParentID).Get(ctx)
+			if err != nil {
+				return err
+			}
+
+			// a reply to a reply, get level 0 parent (thread)
+			if resp.ParentID != resp.ThreadID {
+				thread, err = client.Collection(constant.EntryResponses).Doc(resp.ThreadID).Get(ctx)
+				if err != nil {
+					return err
+				}
+			}
+
+			// if thread found, increment reply_count
+			// otherwise increment reply_count of parent
+			update := []firestore.Update{{
+				Path:  "reply_count",
+				Value: firestore.Increment(incrementValue),
+			}}
+			if thread != nil {
+				err = tx.Update(thread.Ref, update)
+				if err != nil {
+					return err
+				}
+			} else {
+				err = tx.Update(parent.Ref, update)
+				if err != nil {
+					return err
+				}
+			}
+
+			// TODO: Notify parent author
+			// if failed should not failed the transaction.
+			if (incrementValue > 0) && (resp.UserID != parent.Data()["user_id"].(string)) {
+				fmt.Println("TODO: send push!")
+			}
+		}
+
+		// update entry comment count
+		entry := client.Collection(entryCollectionByCategory(categoryID)).Doc(entryID)
+		update := []firestore.Update{{
+			Path:  "comment_count",
+			Value: firestore.Increment(incrementValue),
+		}}
+		return tx.Update(entry, update)
+
+		// -- transaction end
+	})
 }
 
 // -- reaction aggregation
-func aggregateReactionCreate(ctx context.Context, client *firestore.Client, resp *response) error {
+func aggregateReactionCreateDelete(ctx context.Context, client *firestore.Client, resp *response, incrementValue int) error {
 	entryID := strconv.FormatInt(resp.EntryID, 10)
 	categoryID := resp.EntryCategoryID
 	reaction := resp.Reaction
 
 	update := []firestore.Update{{
 		Path:  fmt.Sprintf("reaction_%s_count", strings.ToLower(reaction)),
-		Value: firestore.Increment(1),
+		Value: firestore.Increment(incrementValue),
 	}}
 	_, err := client.Collection(entryCollectionByCategory(categoryID)).Doc(entryID).Update(ctx, update)
 	return err
@@ -141,23 +192,11 @@ func aggregateReactionUpdate(ctx context.Context, client *firestore.Client, befo
 			Path:  fmt.Sprintf("reaction_%s_count", strings.ToLower(oldReaction)),
 			Value: firestore.Increment(-1),
 		},
-		{Path: fmt.Sprintf("reaction_%s_count", strings.ToLower(newReaction)),
+		{
+			Path:  fmt.Sprintf("reaction_%s_count", strings.ToLower(newReaction)),
 			Value: firestore.Increment(1),
 		},
 	}
-	_, err := client.Collection(entryCollectionByCategory(categoryID)).Doc(entryID).Update(ctx, update)
-	return err
-}
-
-func aggregateReactionDelete(ctx context.Context, client *firestore.Client, resp *response) error {
-	entryID := strconv.FormatInt(resp.EntryID, 10)
-	categoryID := resp.EntryCategoryID
-	reaction := resp.Reaction
-
-	update := []firestore.Update{{
-		Path:  fmt.Sprintf("reaction_%s_count", strings.ToLower(reaction)),
-		Value: firestore.Increment(-1),
-	}}
 	_, err := client.Collection(entryCollectionByCategory(categoryID)).Doc(entryID).Update(ctx, update)
 	return err
 }
