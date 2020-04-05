@@ -77,11 +77,13 @@ func aggregateEntryResponse(ctx context.Context, store *firestore.Client, rawdat
 			// aggregator
 			err := aggregateComment(ctx, store, data.Before, -1)
 			if err != nil {
+				fmt.Println("AGG COMMENT -", err)
 				return err
 			}
 			// delete replies if any
 			err = deleteCommentReplies(ctx, store, data.ID, data.Before)
 			if err != nil {
+				fmt.Println("DEL COMMENT -", err)
 				return err
 			}
 		case typeReaction:
