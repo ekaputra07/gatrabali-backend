@@ -44,12 +44,12 @@ func main() {
 
 	pubsub.Use(pubs.New(pubs.Config{Debug: false})) // pubsub middleware
 	pubsub.Post("/sync-data", sync.Handler(ctx, firebaseApp))
-	pubsub.Post("/push-notification", push.Handler(ctx, firebaseApp))
-	pubsub.Post("/firestore-events", firestore.Handler(ctx, firebaseApp))
+	pubsub.Post("/push-notification", push.New(firebaseApp).Handle())
+	pubsub.Post("/firestore-events", firestore.New(firebaseApp).Handle())
 	pubsub.Use(softErrorHandler()) // always return OK response to avoid PubSub retrying
 
 	// all /api/** are to REST apis for clients
-	api.Group(ctx, "/api/v1", app, firebaseApp)
+	api.New(firebaseApp).Routes(app, "/api/v1")
 
 	app.Listen(config.ServicePort)
 }

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"cloud.google.com/go/firestore"
+	"cloud.google.com/go/pubsub"
 
 	"server/common/constant"
 )
@@ -26,6 +27,58 @@ type responseData struct {
 	After     *response `json:"after"`
 }
 
+func (h *Handler) aggregateResponses(ctx context.Context, pubsubData []byte) error {
+	var data *responseData
+	if err := json.Unmarshal(pubsubData, &data); err != nil {
+		return err
+	}
+
+	// on created
+	if (data.Before == nil) && (data.After != nil) {
+		after := data.After.setFirestore(h.firestore)
+
+		switch after.Type {
+		case typeComment:
+			return after.aggregateComment(ctx, 1)
+		case typeReaction:
+			return after.aggregateReactionCreateDelete(ctx, 1)
+		}
+	}
+
+	// on updated
+	// only process REACTION update, comment update does not affect comments count.
+	if (data.Before != nil) && (data.After != nil) {
+		after := data.After.setFirestore(h.firestore)
+
+		if after.Type == typeReaction {
+			return aggregateReactionUpdate(ctx, data.Before, after)
+		}
+	}
+
+	// on deleted
+	if (data.Before != nil) && (data.After == nil) {
+		before := data.Before.setFirestore(h.firestore)
+
+		switch before.Type {
+		case typeComment:
+			// aggregator
+			err := before.aggregateComment(ctx, -1)
+			if err != nil {
+				return err
+			}
+			// delete replies if any
+			err = before.deleteReplies(ctx, data.ID)
+			if err != nil {
+				return err
+			}
+		case typeReaction:
+			return before.aggregateReactionCreateDelete(ctx, -1)
+		}
+	}
+
+	return nil
+}
+
 type user struct {
 	ID     string `json:"id"`
 	Name   string `json:"name"`
@@ -33,6 +86,9 @@ type user struct {
 }
 
 type response struct {
+	firestore *firestore.Client
+	pubsub    *pubsub.Client
+
 	UserID          string `json:"user_id"`
 	Type            string `json:"type"`
 	EntryID         int64  `json:"entry_id"`
@@ -46,76 +102,27 @@ type response struct {
 	User            user   `json:"user"`
 }
 
-func aggregateEntryResponse(ctx context.Context, store *firestore.Client, rawdata []byte) error {
-	var data *responseData
-	if err := json.Unmarshal(rawdata, &data); err != nil {
-		return err
-	}
-
-	// on created
-	if (data.Before == nil) && (data.After != nil) {
-		switch data.After.Type {
-		case typeComment:
-			return aggregateComment(ctx, store, data.After, 1)
-		case typeReaction:
-			return aggregateReactionCreateDelete(ctx, store, data.After, 1)
-		}
-	}
-
-	// on updated
-	// only process REACTION update, comment update does not affect comments count.
-	if (data.Before != nil) && (data.After != nil) {
-		if data.After.Type == typeReaction {
-			return aggregateReactionUpdate(ctx, store, data.Before, data.After)
-		}
-	}
-
-	// on deleted
-	if (data.Before != nil) && (data.After == nil) {
-		switch data.Before.Type {
-		case typeComment:
-			// aggregator
-			err := aggregateComment(ctx, store, data.Before, -1)
-			if err != nil {
-				return err
-			}
-			// delete replies if any
-			err = deleteCommentReplies(ctx, store, data.ID, data.Before)
-			if err != nil {
-				return err
-			}
-		case typeReaction:
-			return aggregateReactionCreateDelete(ctx, store, data.Before, -1)
-		}
-	}
-
-	return nil
+func (r *response) setFirestore(client *firestore.Client) *response {
+	r.firestore = client
+	return r
 }
 
-// entryCollectionByCategory method is specific to BaliFeed app only
-func entryCollectionByCategory(categoryID int64) string {
-	c := constant.Entries
-	if categoryID == 11 {
-		c = constant.Kriminal
-	} else if categoryID == 12 {
-		c = constant.BaliUnited
-	} else if categoryID > 12 {
-		c = constant.BaleBengong
-	}
-	return c
+func (r *response) setPubsub(client *pubsub.Client) *response {
+	r.pubsub = client
+	return r
 }
 
-// deleteCommentReplies deletes all replies for this comment
-func deleteCommentReplies(ctx context.Context, client *firestore.Client, ID string, resp *response) error {
+// deleteReplies deletes all replies for this comment
+func (r *response) deleteReplies(ctx context.Context, ID string) error {
 	// top level comment, delete all replies
-	if resp.ThreadID == "" {
-		iter := client.Collection(constant.EntryResponses).Where("thread_id", "==", ID).Documents(ctx)
+	if r.ThreadID == "" {
+		iter := r.firestore.Collection(constant.EntryResponses).Where("thread_id", "==", ID).Documents(ctx)
 		snaps, err := iter.GetAll()
 		if err != nil {
 			return err
 		}
 		if len(snaps) > 0 {
-			batch := client.Batch()
+			batch := r.firestore.Batch()
 			for _, snap := range snaps {
 				batch.Delete(snap.Ref)
 			}
@@ -125,14 +132,14 @@ func deleteCommentReplies(ctx context.Context, client *firestore.Client, ID stri
 	}
 
 	// a reply, delete all replies (childs) to this reply
-	if resp.ThreadID != "" {
-		iter := client.Collection(constant.EntryResponses).Where("parent_id", "==", ID).Documents(ctx)
+	if r.ThreadID != "" {
+		iter := r.firestore.Collection(constant.EntryResponses).Where("parent_id", "==", ID).Documents(ctx)
 		snaps, err := iter.GetAll()
 		if err != nil {
 			return err
 		}
 		if len(snaps) > 0 {
-			batch := client.Batch()
+			batch := r.firestore.Batch()
 			for _, snap := range snaps {
 				batch.Delete(snap.Ref)
 			}
@@ -145,16 +152,16 @@ func deleteCommentReplies(ctx context.Context, client *firestore.Client, ID stri
 }
 
 // -- comment aggregation
-func aggregateComment(ctx context.Context, client *firestore.Client, resp *response, incrementValue int) error {
-	entryID := strconv.FormatInt(resp.EntryID, 10)
-	categoryID := resp.EntryCategoryID
+func (r *response) aggregateComment(ctx context.Context, incrementValue int) error {
+	entryID := strconv.FormatInt(r.EntryID, 10)
+	categoryID := r.EntryCategoryID
 
 	// run inside a transaction
-	return client.RunTransaction(ctx, func(ctx context.Context, tx *firestore.Transaction) error {
+	return r.firestore.RunTransaction(ctx, func(ctx context.Context, tx *firestore.Transaction) error {
 		// -- transaction start
 
 		// update entry comment count
-		entry := client.Collection(entryCollectionByCategory(categoryID)).Doc(entryID)
+		entry := r.firestore.Collection(entryCollectionByCategory(categoryID)).Doc(entryID)
 		update := []firestore.Update{{
 			Path:  "comment_count",
 			Value: firestore.Increment(incrementValue),
@@ -164,21 +171,21 @@ func aggregateComment(ctx context.Context, client *firestore.Client, resp *respo
 		}
 
 		// if has parent_id and thread_id
-		if resp.ParentID != "" && resp.ThreadID != "" {
+		if r.ParentID != "" && r.ThreadID != "" {
 
 			var parent *firestore.DocumentSnapshot
 			var thread *firestore.DocumentSnapshot
 			var err error
 
 			// get direct parent
-			parent, err = client.Collection(constant.EntryResponses).Doc(resp.ParentID).Get(ctx)
+			parent, err = r.firestore.Collection(constant.EntryResponses).Doc(r.ParentID).Get(ctx)
 			if err != nil {
 				parent = nil
 			}
 
 			// a reply to a reply, get level 0 parent (thread)
-			if resp.ParentID != resp.ThreadID {
-				thread, _ = client.Collection(constant.EntryResponses).Doc(resp.ThreadID).Get(ctx)
+			if r.ParentID != r.ThreadID {
+				thread, _ = r.firestore.Collection(constant.EntryResponses).Doc(r.ThreadID).Get(ctx)
 				if err != nil {
 					thread = nil
 				}
@@ -207,7 +214,7 @@ func aggregateComment(ctx context.Context, client *firestore.Client, resp *respo
 
 			// TODO: Notify parent author
 			// if failed should not failed the transaction.
-			if (incrementValue > 0) && (parent != nil) && (resp.UserID != parent.Data()["user_id"].(string)) {
+			if (incrementValue > 0) && (parent != nil) && (r.UserID != parent.Data()["user_id"].(string)) {
 				fmt.Println("TODO: send push!")
 			}
 		}
@@ -218,20 +225,24 @@ func aggregateComment(ctx context.Context, client *firestore.Client, resp *respo
 }
 
 // -- reaction aggregation
-func aggregateReactionCreateDelete(ctx context.Context, client *firestore.Client, resp *response, incrementValue int) error {
-	entryID := strconv.FormatInt(resp.EntryID, 10)
-	categoryID := resp.EntryCategoryID
-	reaction := resp.Reaction
+func (r *response) aggregateReactionCreateDelete(ctx context.Context, incrementValue int) error {
+	entryID := strconv.FormatInt(r.EntryID, 10)
+	categoryID := r.EntryCategoryID
+	reaction := r.Reaction
 
 	update := []firestore.Update{{
 		Path:  fmt.Sprintf("reaction_%s_count", strings.ToLower(reaction)),
 		Value: firestore.Increment(incrementValue),
 	}}
-	_, err := client.Collection(entryCollectionByCategory(categoryID)).Doc(entryID).Update(ctx, update)
+	_, err := r.firestore.
+		Collection(entryCollectionByCategory(categoryID)).
+		Doc(entryID).
+		Update(ctx, update)
+
 	return err
 }
 
-func aggregateReactionUpdate(ctx context.Context, client *firestore.Client, before, after *response) error {
+func aggregateReactionUpdate(ctx context.Context, before, after *response) error {
 	entryID := strconv.FormatInt(after.EntryID, 10)
 	categoryID := after.EntryCategoryID
 	newReaction := after.Reaction
@@ -251,6 +262,23 @@ func aggregateReactionUpdate(ctx context.Context, client *firestore.Client, befo
 			Value: firestore.Increment(1),
 		},
 	}
-	_, err := client.Collection(entryCollectionByCategory(categoryID)).Doc(entryID).Update(ctx, update)
+	_, err := after.firestore.
+		Collection(entryCollectionByCategory(categoryID)).
+		Doc(entryID).
+		Update(ctx, update)
+
 	return err
+}
+
+// entryCollectionByCategory method is specific to BaliFeed app only
+func entryCollectionByCategory(categoryID int64) string {
+	c := constant.Entries
+	if categoryID == 11 {
+		c = constant.Kriminal
+	} else if categoryID == 12 {
+		c = constant.BaliUnited
+	} else if categoryID > 12 {
+		c = constant.BaleBengong
+	}
+	return c
 }

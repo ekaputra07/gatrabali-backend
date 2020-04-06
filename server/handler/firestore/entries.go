@@ -7,7 +7,6 @@ import (
 	"log"
 	"strconv"
 
-	"cloud.google.com/go/firestore"
 	"cloud.google.com/go/pubsub"
 	"google.golang.org/api/iterator"
 
@@ -32,23 +31,13 @@ type entry struct {
 	PublishedAt int64  `json:"published_at"`
 }
 
-// isUserExists check to see if user with given ID is currently exists.
-func isUserExists(ctx context.Context, client *firestore.Client, userID string) bool {
-	_, err := client.Collection("users").Doc(userID).Get(ctx)
-	return err == nil
-}
-
 // notifySubscriber triggered when new entry written to Firestore,
 // get the list of the subscribers for the category of this entry and send a message to PushNotification topic.
 // TODO: this method is too long!
-func notifySubscriber(
-	ctx context.Context,
-	firestoreClient *firestore.Client,
-	pubsubClient *pubsub.Client,
-	rawdata []byte) error {
+func (h *Handler) notifySubscribers(ctx context.Context, pubsubData []byte) error {
 
 	var data *entryData
-	if err := json.Unmarshal(rawdata, &data); err != nil {
+	if err := json.Unmarshal(pubsubData, &data); err != nil {
 		return err
 	}
 
@@ -70,13 +59,13 @@ func notifySubscriber(
 	}
 
 	// Get the category
-	doc, err := firestoreClient.Collection(constant.Categories).Doc(subscriberCategory).Get(ctx)
+	doc, err := h.firestore.Collection(constant.Categories).Doc(subscriberCategory).Get(ctx)
 	if err != nil {
 		return fmt.Errorf("Category with ID=%v does not exists", subscriberCategory)
 	}
 
 	category := doc.Data()
-	pushTopic := pubsubClient.Topic(config.PushNotificationTopic)
+	pushTopic := h.pubsub.Topic(config.PushNotificationTopic)
 
 	// create message to publish to PushNotification topic.
 	pushData := types.PushNotificationPayload{
@@ -95,7 +84,10 @@ func notifySubscriber(
 	}
 
 	// get subscribers
-	iter := firestoreClient.Collection(fmt.Sprintf("categories/%v/subscribers", subscriberCategory)).Documents(ctx)
+	iter := h.firestore.
+		Collection(fmt.Sprintf("categories/%v/subscribers", subscriberCategory)).
+		Documents(ctx)
+
 	for {
 		doc, err := iter.Next()
 		if err == iterator.Done {
@@ -110,7 +102,7 @@ func notifySubscriber(
 
 		// check to see if user exists before publishing a message.
 		// if user does not exists, delete them from subscriber list.
-		if !isUserExists(ctx, firestoreClient, pushData.UserID) {
+		if !h.isUserExists(ctx, pushData.UserID) {
 			if _, err := doc.Ref.Delete(ctx); err != nil {
 				log.Printf("Failed to delete subscriber %v from category %v\n", pushData.UserID, subscriberCategory)
 			}
@@ -133,4 +125,10 @@ func notifySubscriber(
 	}
 
 	return nil
+}
+
+// h.isUserExists check to see if user with given ID is currently exists.
+func (h *Handler) isUserExists(ctx context.Context, userID string) bool {
+	_, err := h.firestore.Collection("users").Doc(userID).Get(ctx)
+	return err == nil
 }

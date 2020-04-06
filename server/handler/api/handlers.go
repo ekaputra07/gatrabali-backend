@@ -7,8 +7,6 @@ import (
 	"strconv"
 
 	"github.com/gofiber/fiber"
-
-	"server/firebase"
 )
 
 const (
@@ -16,35 +14,33 @@ const (
 	defaultSmaxAge = 3600 // CDN cache: 1 hr
 )
 
-func setCacheControl(c *fiber.Ctx, maxAge, smaxAge int64) {
+func (h *Handler) setCacheControl(c *fiber.Ctx, maxAge, smaxAge int64) {
 	c.Set("Cache-Control", fmt.Sprintf("public, max-age=%v, s-maxage=%v", maxAge, smaxAge))
 }
 
 // this is a workaround to Fiber's c.JSON() content-type doesn't include charset by default.
 // https://github.com/gofiber/fiber/issues/248
-func sendJSON(c *fiber.Ctx, body interface{}) {
+func (h *Handler) sendJSON(c *fiber.Ctx, body interface{}) {
 	c.JSON(body)
 	c.Set("Content-type", "application/json; charset=utf-8")
 }
 
-func handleFeeds(ctx context.Context, fb *firebase.Firebase) func(*fiber.Ctx) {
+func (h *Handler) handleFeeds() func(*fiber.Ctx) {
 	return func(c *fiber.Ctx) {
-		// get firestore
-		firestore, err := fb.FirestoreClient(ctx)
+		feeds, err := h.getFeeds(context.Background())
 		if err != nil {
 			c.Next(err)
 			return
 		}
 
-		feeds := getFeeds(context.Background(), firestore)
 		if len(feeds) > 0 {
-			setCacheControl(c, defaultMaxAge, defaultSmaxAge)
+			h.setCacheControl(c, defaultMaxAge, defaultSmaxAge)
 		}
-		sendJSON(c, feeds)
+		h.sendJSON(c, feeds)
 	}
 }
 
-func handleEntries(ctx context.Context, fb *firebase.Firebase, collection string) func(*fiber.Ctx) {
+func (h *Handler) handleEntries(collection string) func(*fiber.Ctx) {
 	return func(c *fiber.Ctx) {
 		cat, err := strconv.Atoi(c.Query("categoryId"))
 		if err != nil {
@@ -61,15 +57,6 @@ func handleEntries(ctx context.Context, fb *firebase.Firebase, collection string
 			cur = 0
 		}
 
-		// get firestore
-		firestore, err := fb.FirestoreClient(ctx)
-		if err != nil {
-			c.Next(err)
-			return
-		}
-
-		var entries []map[string]interface{}
-
 		opts := queryopts{
 			Collection: collection,
 			Cursor:     cur,
@@ -79,30 +66,29 @@ func handleEntries(ctx context.Context, fb *firebase.Firebase, collection string
 			opts.Category = cat
 		}
 
-		entries = getEntries(context.Background(), firestore, opts)
-		if len(entries) > 0 {
-			setCacheControl(c, defaultMaxAge, defaultSmaxAge)
-		}
-		sendJSON(c, entries)
-	}
-}
-
-func handleEntry(ctx context.Context, fb *firebase.Firebase, collection string) func(*fiber.Ctx) {
-	return func(c *fiber.Ctx) {
-		id := c.Params("entryId")
-
-		// get firestore
-		firestore, err := fb.FirestoreClient(ctx)
+		entries, err := h.getEntries(context.Background(), opts)
 		if err != nil {
 			c.Next(err)
 			return
 		}
-		entry, err := getEntry(context.Background(), firestore, queryopts{Collection: collection, ID: id})
+
+		if len(entries) > 0 {
+			h.setCacheControl(c, defaultMaxAge, defaultSmaxAge)
+		}
+		h.sendJSON(c, entries)
+	}
+}
+
+func (h *Handler) handleEntry(collection string) func(*fiber.Ctx) {
+	return func(c *fiber.Ctx) {
+		id := c.Params("entryId")
+
+		entry, err := h.getEntry(context.Background(), queryopts{Collection: collection, ID: id})
 		if err != nil {
 			c.SendStatus(http.StatusNotFound)
 			return
 		}
-		setCacheControl(c, defaultMaxAge, 86400) // 24 hr since individual entry won't change much
-		sendJSON(c, entry)
+		h.setCacheControl(c, defaultMaxAge, 86400) // 24 hr since individual entry won't change much
+		h.sendJSON(c, entry)
 	}
 }

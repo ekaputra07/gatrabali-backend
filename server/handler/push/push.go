@@ -17,8 +17,18 @@ import (
 	"server/firebase"
 )
 
-// Handler handle sending push notification
-func Handler(ctx context.Context, fb *firebase.Firebase) func(*fiber.Ctx) {
+// Handler represents the handler for Push notification
+type Handler struct {
+	fb *firebase.Firebase
+}
+
+// New returns an instance of Handler
+func New(fb *firebase.Firebase) *Handler {
+	return &Handler{fb}
+}
+
+// Handle handles the request
+func (h *Handler) Handle() func(*fiber.Ctx) {
 	return func(c *fiber.Ctx) {
 		msg, ok := c.Locals(pubsub.LocalsKey).(*pubsub.Message)
 		if !ok {
@@ -37,21 +47,21 @@ func Handler(ctx context.Context, fb *firebase.Firebase) func(*fiber.Ctx) {
 			return
 		}
 
+		ctx := context.Background()
+
 		// load clients
-		firestoreClient, err := fb.FirestoreClient(ctx)
+		firestoreClient, err := h.fb.FirestoreClient(ctx)
 		if err != nil {
 			c.Next(err)
 			return
 		}
-		messagingClient, err := fb.MessagingClient(ctx)
+		messagingClient, err := h.fb.MessagingClient(ctx)
 		if err != nil {
 			c.Next(err)
 			return
 		}
 
 		// preparing to push
-		ctx := context.Background() // request ctx
-
 		doc, err := firestoreClient.Collection("users").Doc(payload.UserID).Get(ctx)
 		if err != nil {
 			c.Next(err)

@@ -5,33 +5,45 @@ import (
 	"log"
 	"net/http"
 
+	"cloud.google.com/go/firestore"
 	"github.com/gofiber/fiber"
 
 	"server/common/constant"
 	"server/firebase"
 )
 
-// Group is collection handler for API
-func Group(
-	ctx context.Context,
-	pathPrefix string,
-	app *fiber.Fiber,
-	fb *firebase.Firebase) {
+// Handler represents the handler for APIs
+type Handler struct {
+	fb *firebase.Firebase
+}
+
+// New returns Handler instance
+func New(fb *firebase.Firebase) *Handler {
+	return &Handler{fb: fb}
+}
+
+func (h *Handler) firestore(ctx context.Context) (f *firestore.Client, err error) {
+	f, err = h.fb.FirestoreClient(ctx)
+	return
+}
+
+// Routes is collection handler for API
+func (h *Handler) Routes(app *fiber.Fiber, pathPrefix string) {
 
 	api := app.Group(pathPrefix)
-	api.Get("/feeds", handleFeeds(ctx, fb))
+	api.Get("/feeds", h.handleFeeds())
 
-	api.Get("/entries", handleEntries(ctx, fb, constant.Entries))
-	api.Get("/entries/:entryId", handleEntry(ctx, fb, constant.Entries))
+	api.Get("/entries", h.handleEntries(constant.Entries))
+	api.Get("/entries/:entryId", h.handleEntry(constant.Entries))
 
-	api.Get("/kriminal/entries", handleEntries(ctx, fb, constant.Kriminal))
-	api.Get("/kriminal/entries/:entryId", handleEntry(ctx, fb, constant.Kriminal))
+	api.Get("/kriminal/entries", h.handleEntries(constant.Kriminal))
+	api.Get("/kriminal/entries/:entryId", h.handleEntry(constant.Kriminal))
 
-	api.Get("/baliunited/entries", handleEntries(ctx, fb, constant.BaliUnited))
-	api.Get("/baliunited/entries/:entryId", handleEntry(ctx, fb, constant.BaliUnited))
+	api.Get("/baliunited/entries", h.handleEntries(constant.BaliUnited))
+	api.Get("/baliunited/entries/:entryId", h.handleEntry(constant.BaliUnited))
 
-	api.Get("/balebengong/entries", handleEntries(ctx, fb, constant.BaleBengong))
-	api.Get("/balebengong/entries/:entryId", handleEntry(ctx, fb, constant.BaleBengong))
+	api.Get("/balebengong/entries", h.handleEntries(constant.BaleBengong))
+	api.Get("/balebengong/entries/:entryId", h.handleEntry(constant.BaleBengong))
 
 	// server error handler
 	api.Use(func(c *fiber.Ctx) {

@@ -5,17 +5,33 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/fiberweb/pubsub"
+	"cloud.google.com/go/firestore"
+	"cloud.google.com/go/pubsub"
+	pubs "github.com/fiberweb/pubsub"
 	"github.com/gofiber/fiber"
 
 	"server/config"
 	"server/firebase"
 )
 
-// Handler dispatch Firestore events
-func Handler(ctx context.Context, fb *firebase.Firebase) func(*fiber.Ctx) {
+// Handler represents the handler for Firestore events
+type Handler struct {
+	fb *firebase.Firebase
+
+	firestore *firestore.Client // lazily set
+	pubsub    *pubsub.Client    // lazily set
+}
+
+// New returns Handler instance
+func New(fb *firebase.Firebase) *Handler {
+	return &Handler{fb: fb}
+}
+
+// Handle handles the request
+func (h *Handler) Handle() func(*fiber.Ctx) {
+
 	return func(c *fiber.Ctx) {
-		msg, ok := c.Locals(pubsub.LocalsKey).(*pubsub.Message)
+		msg, ok := c.Locals(pubs.LocalsKey).(*pubs.Message)
 		if !ok {
 			c.Next(errors.New("unable to retrieve PubSub message from c.Locals"))
 			return
@@ -29,28 +45,29 @@ func Handler(ctx context.Context, fb *firebase.Firebase) func(*fiber.Ctx) {
 			return
 		}
 
-		// load clients
-		firestoreClient, err := fb.FirestoreClient(ctx)
-		if err != nil {
-			c.Next(err)
-			return
-		}
-		pubsubClient, err := fb.PubSubClient(ctx, config.GCPProject)
-		if err != nil {
-			c.Next(err)
-			return
-		}
+		ctx := context.Background()
 
-		ctx := context.Background() // request ctx
+		// load clients
+		var err error
+		h.firestore, err = h.fb.FirestoreClient(ctx)
+		if err != nil {
+			c.Next(err)
+			return
+		}
+		h.pubsub, err = h.fb.PubSubClient(ctx, config.GCPProject)
+		if err != nil {
+			c.Next(err)
+			return
+		}
 
 		switch datatype.(string) {
 		case "entries":
-			if err := notifySubscriber(ctx, firestoreClient, pubsubClient, msg.Message.Data); err != nil {
+			if err := h.notifySubscribers(ctx, msg.Message.Data); err != nil {
 				c.Next(err)
 				return
 			}
 		case "responses":
-			if err := aggregateEntryResponse(ctx, firestoreClient, msg.Message.Data); err != nil {
+			if err := h.aggregateResponses(ctx, msg.Message.Data); err != nil {
 				c.Next(err)
 				return
 			}
