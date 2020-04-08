@@ -1,4 +1,4 @@
-package service
+package sync
 
 import (
 	"context"
@@ -11,12 +11,12 @@ import (
 	"server/common/types"
 )
 
-// StartCategorySync calls Miniflux categories API and store the objects to Firestore
-func StartCategorySync(ctx context.Context, store *firestore.Client, payload *types.SyncPayload) error {
+// storeCategories calls Miniflux categories API and store the objects to Firestore
+func storeCategories(ctx context.Context, store *firestore.Client, payload *types.SyncPayload) error {
 	if *payload.Op == constant.OpWrite {
-		categories, err := GetCategories()
+		categories, err := getCategories()
 		if err != nil {
-			return fmt.Errorf("StartCategorySync failed: %s", err)
+			return fmt.Errorf("storeCategories failed: %s", err)
 		}
 
 		// write in batch
@@ -32,15 +32,15 @@ func StartCategorySync(ctx context.Context, store *firestore.Client, payload *ty
 		_, err := store.Collection(constant.Categories).Doc(strconv.FormatInt(*payload.ID, 10)).Delete(ctx)
 		return err
 	}
-	return fmt.Errorf("Invalid operation for StartCategorySync: %v", *payload.Op)
+	return fmt.Errorf("Invalid operation for storeCategories: %v", *payload.Op)
 }
 
-// StartFeedSync calls Miniflux feeds API and store the object to Firestore
-func StartFeedSync(ctx context.Context, store *firestore.Client, payload *types.SyncPayload) error {
+// storeFeed calls Miniflux feeds API and store the object to Firestore
+func storeFeed(ctx context.Context, store *firestore.Client, payload *types.SyncPayload) error {
 	if *payload.Op == constant.OpWrite {
-		feed, err := GetFeed(*payload.ID)
+		feed, err := getFeed(*payload.ID)
 		if err != nil {
-			return fmt.Errorf("StartFeedSync failed: %s", err)
+			return fmt.Errorf("storeFeed failed: %s", err)
 		}
 		_, err = store.Collection(constant.Feeds).Doc(strconv.FormatInt(*payload.ID, 10)).Set(ctx, feed)
 		return err
@@ -49,15 +49,15 @@ func StartFeedSync(ctx context.Context, store *firestore.Client, payload *types.
 		_, err := store.Collection(constant.Feeds).Doc(strconv.FormatInt(*payload.ID, 10)).Delete(ctx)
 		return err
 	}
-	return fmt.Errorf("Invalid operation for StartFeedSync: %v", *payload.Op)
+	return fmt.Errorf("Invalid operation for storeFeed: %v", *payload.Op)
 }
 
-// StartEntrySync calls Miniflux entries API and store the object to Firestore
-func StartEntrySync(ctx context.Context, store *firestore.Client, payload *types.SyncPayload) error {
+// storeEntry calls Miniflux entries API and store the object to Firestore
+func storeEntry(ctx context.Context, store *firestore.Client, payload *types.SyncPayload) error {
 	if *payload.Op == constant.OpWrite {
-		entry, err := GetEntry(*payload.ID)
+		entry, err := getEntry(*payload.ID)
 		if err != nil {
-			return fmt.Errorf("StartEntrySync failed: %s", err)
+			return fmt.Errorf("storeEntry failed: %s", err)
 		}
 		// if category `kriminal` or `baliunited` store so sparate collection
 		if entry.CategoryID == 11 {
@@ -78,5 +78,5 @@ func StartEntrySync(ctx context.Context, store *firestore.Client, payload *types
 		_, err := store.Collection(constant.Entries).Doc(strconv.FormatInt(*payload.ID, 10)).Delete(ctx)
 		return err
 	}
-	return fmt.Errorf("Invalid operation for StartEntrySync: %v", *payload.Op)
+	return fmt.Errorf("Invalid operation for storeEntry: %v", *payload.Op)
 }

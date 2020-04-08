@@ -8,22 +8,22 @@ import (
 	pubs "github.com/fiberweb/pubsub"
 	"github.com/gofiber/fiber"
 
+	"server/common/service"
 	"server/config"
-	"server/firebase"
 	"server/handler/api"
-	"server/handler/firestore"
+	"server/handler/events"
 	"server/handler/push"
 	"server/handler/sync"
 )
 
-var firebaseApp *firebase.Firebase
+var gcp *service.Google
 
 func main() {
 	ctx := context.Background()
 
 	// initialize Firebase app
 	var err error
-	firebaseApp, err = firebase.New(ctx)
+	gcp, err = service.NewGoogle(ctx, config.GCPProject)
 	if err != nil {
 		log.Fatalln("Unable to initialize Firebase app:", err)
 	}
@@ -43,13 +43,13 @@ func main() {
 	}))
 
 	pubsub.Use(pubs.New(pubs.Config{Debug: false})) // pubsub middleware
-	pubsub.Post("/sync-data", sync.Handler(ctx, firebaseApp))
-	pubsub.Post("/push-notification", push.New(firebaseApp).Handle())
-	pubsub.Post("/firestore-events", firestore.New(firebaseApp).Handle())
+	pubsub.Post("/sync-data", sync.Handler(ctx, gcp))
+	pubsub.Post("/push-notification", push.New(gcp).Handle())
+	pubsub.Post("/firestore-events", events.New(gcp).Handle())
 	pubsub.Use(softErrorHandler()) // always return OK response to avoid PubSub retrying
 
 	// all /api/** are to REST apis for clients
-	api.New(firebaseApp).Routes(app, "/api/v1")
+	api.New(gcp).Routes(app, "/api/v1")
 
 	app.Listen(config.ServicePort)
 }

@@ -20,12 +20,11 @@ type queryopts struct {
 
 // getFeeds returns a list of feeds
 func (h *Handler) getFeeds(ctx context.Context) ([]map[string]interface{}, error) {
-	firestore, err := h.firestore(ctx)
-	if err != nil {
+	if err := h.google.InitFirestore(ctx); err != nil {
 		return nil, err
 	}
 
-	iter := firestore.Collection(constant.Feeds).Documents(ctx)
+	iter := h.google.Firestore.Collection(constant.Feeds).Documents(ctx)
 	var items []map[string]interface{}
 	for {
 		doc, err := iter.Next()
@@ -50,12 +49,11 @@ func (h *Handler) getEntry(ctx context.Context, opts queryopts) (map[string]inte
 		return nil, errors.New("missing Collection or ID in queryopts")
 	}
 
-	firestore, err := h.firestore(ctx)
-	if err != nil {
+	if err := h.google.InitFirestore(ctx); err != nil {
 		return nil, err
 	}
 
-	entry, err := firestore.Collection(opts.Collection).Doc(opts.ID).Get(ctx)
+	entry, err := h.google.Firestore.Collection(opts.Collection).Doc(opts.ID).Get(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -63,8 +61,7 @@ func (h *Handler) getEntry(ctx context.Context, opts queryopts) (map[string]inte
 }
 
 func (h *Handler) getEntries(ctx context.Context, opts queryopts) ([]map[string]interface{}, error) {
-	firestore, err := h.firestore(ctx)
-	if err != nil {
+	if err := h.google.InitFirestore(ctx); err != nil {
 		return nil, err
 	}
 
@@ -76,7 +73,7 @@ func (h *Handler) getEntries(ctx context.Context, opts queryopts) ([]map[string]
 		opts.Limit = 20
 	}
 
-	query := firestore.Collection(opts.Collection).OrderBy("published_at", fs.Desc).Limit(opts.Limit)
+	query := h.google.Firestore.Collection(opts.Collection).OrderBy("published_at", fs.Desc).Limit(opts.Limit)
 	if opts.Cursor > 0 {
 		query = query.StartAfter(opts.Cursor)
 	}

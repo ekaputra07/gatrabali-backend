@@ -1,4 +1,4 @@
-package firestore
+package events
 
 import (
 	"context"
@@ -59,13 +59,12 @@ func (h *Handler) notifySubscribers(ctx context.Context, pubsubData []byte) erro
 	}
 
 	// Get the category
-	doc, err := h.firestore.Collection(constant.Categories).Doc(subscriberCategory).Get(ctx)
+	doc, err := h.google.Firestore.Collection(constant.Categories).Doc(subscriberCategory).Get(ctx)
 	if err != nil {
 		return fmt.Errorf("Category with ID=%v does not exists", subscriberCategory)
 	}
 
 	category := doc.Data()
-	pushTopic := h.pubsub.Topic(config.PushNotificationTopic)
 
 	// create message to publish to PushNotification topic.
 	pushData := types.PushNotificationPayload{
@@ -84,7 +83,7 @@ func (h *Handler) notifySubscribers(ctx context.Context, pubsubData []byte) erro
 	}
 
 	// get subscribers
-	iter := h.firestore.
+	iter := h.google.Firestore.
 		Collection(fmt.Sprintf("categories/%v/subscribers", subscriberCategory)).
 		Documents(ctx)
 
@@ -116,7 +115,7 @@ func (h *Handler) notifySubscribers(ctx context.Context, pubsubData []byte) erro
 		}
 
 		pubsubMsg := &pubsub.Message{Data: j}
-		serverID, err := pushTopic.Publish(ctx, pubsubMsg).Get(ctx)
+		serverID, err := h.google.PublishToTopic(ctx, config.PushNotificationTopic, pubsubMsg)
 		if err != nil {
 			log.Println("Publish to Push topic failed:", err)
 		} else {
@@ -129,6 +128,6 @@ func (h *Handler) notifySubscribers(ctx context.Context, pubsubData []byte) erro
 
 // h.isUserExists check to see if user with given ID is currently exists.
 func (h *Handler) isUserExists(ctx context.Context, userID string) bool {
-	_, err := h.firestore.Collection("users").Doc(userID).Get(ctx)
+	_, err := h.google.Firestore.Collection("users").Doc(userID).Get(ctx)
 	return err == nil
 }

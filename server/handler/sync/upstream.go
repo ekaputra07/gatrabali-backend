@@ -1,4 +1,4 @@
-package service
+package sync
 
 import (
 	"encoding/json"
@@ -24,8 +24,8 @@ func createGetRequest(path string) (*http.Request, error) {
 	return req, nil
 }
 
-// GetCategories calls /v1/categories
-func GetCategories() (*types.CategoryList, error) {
+// getCategories calls /v1/categories
+func getCategories() (*types.CategoryList, error) {
 	req, err := createGetRequest("/v1/categories")
 	if err != nil {
 		return nil, err
@@ -38,7 +38,7 @@ func GetCategories() (*types.CategoryList, error) {
 		return nil, err
 	}
 	if http.StatusOK != res.StatusCode {
-		return nil, fmt.Errorf("GetCategories() error status code: %v", res.StatusCode)
+		return nil, fmt.Errorf("getCategories() error status code: %v", res.StatusCode)
 	}
 
 	var categories types.CategoryList
@@ -46,8 +46,8 @@ func GetCategories() (*types.CategoryList, error) {
 	return &categories, nil
 }
 
-// GetFeedIcon calls /v1/feeds/:FeedID/icon
-func GetFeedIcon(feedID int64) (*types.FeedIcon, error) {
+// getFeedIcon calls /v1/feeds/:FeedID/icon
+func getFeedIcon(feedID int64) (*types.FeedIcon, error) {
 	req, err := createGetRequest(fmt.Sprintf("/v1/feeds/%v/icon", feedID))
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func GetFeedIcon(feedID int64) (*types.FeedIcon, error) {
 		return nil, err
 	}
 	if http.StatusOK != res.StatusCode {
-		return nil, fmt.Errorf("GetFeedIcon(%v) error status code: %v", feedID, res.StatusCode)
+		return nil, fmt.Errorf("getFeedIcon(%v) error status code: %v", feedID, res.StatusCode)
 	}
 
 	var icon types.FeedIcon
@@ -68,8 +68,8 @@ func GetFeedIcon(feedID int64) (*types.FeedIcon, error) {
 	return &icon, nil
 }
 
-// GetFeed calls /v1/feeds/:ID
-func GetFeed(id int64) (*types.Feed, error) {
+// getFeed calls /v1/feeds/:ID
+func getFeed(id int64) (*types.Feed, error) {
 	req, err := createGetRequest(fmt.Sprintf("/v1/feeds/%v", id))
 	if err != nil {
 		return nil, err
@@ -82,7 +82,7 @@ func GetFeed(id int64) (*types.Feed, error) {
 		return nil, err
 	}
 	if http.StatusOK != res.StatusCode {
-		return nil, fmt.Errorf("GetFeed(%v) error status code: %v", id, res.StatusCode)
+		return nil, fmt.Errorf("getFeed(%v) error status code: %v", id, res.StatusCode)
 	}
 
 	var mFeed types.MFeed
@@ -90,7 +90,7 @@ func GetFeed(id int64) (*types.Feed, error) {
 	feed := mFeed.ToFeed()
 
 	// get feed icon, if error return feed without icon
-	icon, err := GetFeedIcon(id)
+	icon, err := getFeedIcon(id)
 	if err != nil {
 		return &feed, nil
 	}
@@ -98,8 +98,8 @@ func GetFeed(id int64) (*types.Feed, error) {
 	return &feed, nil
 }
 
-// GetEntry calls /v1/entries/:ID
-func GetEntry(id int64) (*types.Entry, error) {
+// getEntry calls /v1/entries/:ID
+func getEntry(id int64) (*types.Entry, error) {
 	req, err := createGetRequest(fmt.Sprintf("/v1/entries/%v", id))
 	if err != nil {
 		return nil, err
@@ -112,7 +112,7 @@ func GetEntry(id int64) (*types.Entry, error) {
 		return nil, err
 	}
 	if http.StatusOK != res.StatusCode {
-		return nil, fmt.Errorf("GetEntry(%v) error status code: %v", id, res.StatusCode)
+		return nil, fmt.Errorf("getEntry(%v) error status code: %v", id, res.StatusCode)
 	}
 
 	var mEntry types.MEntry

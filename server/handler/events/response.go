@@ -1,83 +1,16 @@
-package firestore
+package events
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
 
 	"cloud.google.com/go/firestore"
-	"cloud.google.com/go/pubsub"
 
 	"server/common/constant"
+	"server/common/service"
 )
-
-const (
-	typeComment  = "COMMENT"
-	typeReaction = "REACTION"
-)
-
-// this is based PubSub data format sent by Firesub
-// https://github.com/ekaputra07/firesub
-type responseData struct {
-	ID        string    `json:"id"`
-	Timestamp string    `json:"timestamp"`
-	Before    *response `json:"before"`
-	After     *response `json:"after"`
-}
-
-func (h *Handler) aggregateResponses(ctx context.Context, pubsubData []byte) error {
-	var data *responseData
-	if err := json.Unmarshal(pubsubData, &data); err != nil {
-		return err
-	}
-
-	// on created
-	if (data.Before == nil) && (data.After != nil) {
-		after := data.After.setFirestore(h.firestore)
-
-		switch after.Type {
-		case typeComment:
-			return after.aggregateComment(ctx, 1)
-		case typeReaction:
-			return after.aggregateReactionCreateDelete(ctx, 1)
-		}
-	}
-
-	// on updated
-	// only process REACTION update, comment update does not affect comments count.
-	if (data.Before != nil) && (data.After != nil) {
-		after := data.After.setFirestore(h.firestore)
-
-		if after.Type == typeReaction {
-			return aggregateReactionUpdate(ctx, data.Before, after)
-		}
-	}
-
-	// on deleted
-	if (data.Before != nil) && (data.After == nil) {
-		before := data.Before.setFirestore(h.firestore)
-
-		switch before.Type {
-		case typeComment:
-			// aggregator
-			err := before.aggregateComment(ctx, -1)
-			if err != nil {
-				return err
-			}
-			// delete replies if any
-			err = before.deleteReplies(ctx, data.ID)
-			if err != nil {
-				return err
-			}
-		case typeReaction:
-			return before.aggregateReactionCreateDelete(ctx, -1)
-		}
-	}
-
-	return nil
-}
 
 type user struct {
 	ID     string `json:"id"`
@@ -86,8 +19,7 @@ type user struct {
 }
 
 type response struct {
-	firestore *firestore.Client
-	pubsub    *pubsub.Client
+	google *service.Google
 
 	UserID          string `json:"user_id"`
 	Type            string `json:"type"`
@@ -102,13 +34,8 @@ type response struct {
 	User            user   `json:"user"`
 }
 
-func (r *response) setFirestore(client *firestore.Client) *response {
-	r.firestore = client
-	return r
-}
-
-func (r *response) setPubsub(client *pubsub.Client) *response {
-	r.pubsub = client
+func (r *response) setGoogle(g *service.Google) *response {
+	r.google = g
 	return r
 }
 
@@ -116,13 +43,13 @@ func (r *response) setPubsub(client *pubsub.Client) *response {
 func (r *response) deleteReplies(ctx context.Context, ID string) error {
 	// top level comment, delete all replies
 	if r.ThreadID == "" {
-		iter := r.firestore.Collection(constant.EntryResponses).Where("thread_id", "==", ID).Documents(ctx)
+		iter := r.google.Firestore.Collection(constant.EntryResponses).Where("thread_id", "==", ID).Documents(ctx)
 		snaps, err := iter.GetAll()
 		if err != nil {
 			return err
 		}
 		if len(snaps) > 0 {
-			batch := r.firestore.Batch()
+			batch := r.google.Firestore.Batch()
 			for _, snap := range snaps {
 				batch.Delete(snap.Ref)
 			}
@@ -133,13 +60,13 @@ func (r *response) deleteReplies(ctx context.Context, ID string) error {
 
 	// a reply, delete all replies (childs) to this reply
 	if r.ThreadID != "" {
-		iter := r.firestore.Collection(constant.EntryResponses).Where("parent_id", "==", ID).Documents(ctx)
+		iter := r.google.Firestore.Collection(constant.EntryResponses).Where("parent_id", "==", ID).Documents(ctx)
 		snaps, err := iter.GetAll()
 		if err != nil {
 			return err
 		}
 		if len(snaps) > 0 {
-			batch := r.firestore.Batch()
+			batch := r.google.Firestore.Batch()
 			for _, snap := range snaps {
 				batch.Delete(snap.Ref)
 			}
@@ -157,11 +84,11 @@ func (r *response) aggregateComment(ctx context.Context, incrementValue int) err
 	categoryID := r.EntryCategoryID
 
 	// run inside a transaction
-	return r.firestore.RunTransaction(ctx, func(ctx context.Context, tx *firestore.Transaction) error {
+	return r.google.Firestore.RunTransaction(ctx, func(ctx context.Context, tx *firestore.Transaction) error {
 		// -- transaction start
 
 		// update entry comment count
-		entry := r.firestore.Collection(entryCollectionByCategory(categoryID)).Doc(entryID)
+		entry := r.google.Firestore.Collection(entryCollectionByCategory(categoryID)).Doc(entryID)
 		update := []firestore.Update{{
 			Path:  "comment_count",
 			Value: firestore.Increment(incrementValue),
@@ -178,14 +105,14 @@ func (r *response) aggregateComment(ctx context.Context, incrementValue int) err
 			var err error
 
 			// get direct parent
-			parent, err = r.firestore.Collection(constant.EntryResponses).Doc(r.ParentID).Get(ctx)
+			parent, err = r.google.Firestore.Collection(constant.EntryResponses).Doc(r.ParentID).Get(ctx)
 			if err != nil {
 				parent = nil
 			}
 
 			// a reply to a reply, get level 0 parent (thread)
 			if r.ParentID != r.ThreadID {
-				thread, _ = r.firestore.Collection(constant.EntryResponses).Doc(r.ThreadID).Get(ctx)
+				thread, _ = r.google.Firestore.Collection(constant.EntryResponses).Doc(r.ThreadID).Get(ctx)
 				if err != nil {
 					thread = nil
 				}
@@ -234,7 +161,7 @@ func (r *response) aggregateReactionCreateDelete(ctx context.Context, incrementV
 		Path:  fmt.Sprintf("reaction_%s_count", strings.ToLower(reaction)),
 		Value: firestore.Increment(incrementValue),
 	}}
-	_, err := r.firestore.
+	_, err := r.google.Firestore.
 		Collection(entryCollectionByCategory(categoryID)).
 		Doc(entryID).
 		Update(ctx, update)
@@ -262,7 +189,7 @@ func aggregateReactionUpdate(ctx context.Context, before, after *response) error
 			Value: firestore.Increment(1),
 		},
 	}
-	_, err := after.firestore.
+	_, err := after.google.Firestore.
 		Collection(entryCollectionByCategory(categoryID)).
 		Doc(entryID).
 		Update(ctx, update)

@@ -13,18 +13,18 @@ import (
 	"github.com/fiberweb/pubsub"
 	"github.com/gofiber/fiber"
 
+	"server/common/service"
 	"server/common/types"
-	"server/firebase"
 )
 
 // Handler represents the handler for Push notification
 type Handler struct {
-	fb *firebase.Firebase
+	google *service.Google
 }
 
 // New returns an instance of Handler
-func New(fb *firebase.Firebase) *Handler {
-	return &Handler{fb}
+func New(google *service.Google) *Handler {
+	return &Handler{google}
 }
 
 // Handle handles the request
@@ -49,20 +49,18 @@ func (h *Handler) Handle() func(*fiber.Ctx) {
 
 		ctx := context.Background()
 
-		// load clients
-		firestoreClient, err := h.fb.FirestoreClient(ctx)
-		if err != nil {
+		// init clients
+		if err := h.google.InitFirestore(ctx); err != nil {
 			c.Next(err)
 			return
 		}
-		messagingClient, err := h.fb.MessagingClient(ctx)
-		if err != nil {
+		if err := h.google.InitMessaging(ctx); err != nil {
 			c.Next(err)
 			return
 		}
 
 		// preparing to push
-		doc, err := firestoreClient.Collection("users").Doc(payload.UserID).Get(ctx)
+		doc, err := h.google.Firestore.Collection("users").Doc(payload.UserID).Get(ctx)
 		if err != nil {
 			c.Next(err)
 			return
@@ -107,7 +105,7 @@ func (h *Handler) Handle() func(*fiber.Ctx) {
 				Android:      &androidConfig,
 			}
 
-			resp, err := messagingClient.Send(ctx, message)
+			resp, err := h.google.Messaging.Send(ctx, message)
 			if err != nil {
 				// if error, delete token
 				log.Println("Notification not sent:", err)
@@ -118,7 +116,7 @@ func (h *Handler) Handle() func(*fiber.Ctx) {
 		}
 
 		// store back the remaining tokens to user document
-		if _, err = firestoreClient.
+		if _, err = h.google.Firestore.
 			Collection("users").
 			Doc(payload.UserID).
 			Update(ctx, []firestore.Update{{Path: "fcm_tokens", Value: tokensMap}}); err != nil {

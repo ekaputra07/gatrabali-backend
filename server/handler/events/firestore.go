@@ -1,35 +1,28 @@
-package firestore
+package events
 
 import (
 	"context"
 	"errors"
 	"net/http"
 
-	"cloud.google.com/go/firestore"
-	"cloud.google.com/go/pubsub"
 	pubs "github.com/fiberweb/pubsub"
 	"github.com/gofiber/fiber"
 
-	"server/config"
-	"server/firebase"
+	"server/common/service"
 )
 
 // Handler represents the handler for Firestore events
 type Handler struct {
-	fb *firebase.Firebase
-
-	firestore *firestore.Client // lazily set
-	pubsub    *pubsub.Client    // lazily set
+	google *service.Google
 }
 
 // New returns Handler instance
-func New(fb *firebase.Firebase) *Handler {
-	return &Handler{fb: fb}
+func New(g *service.Google) *Handler {
+	return &Handler{google: g}
 }
 
 // Handle handles the request
 func (h *Handler) Handle() func(*fiber.Ctx) {
-
 	return func(c *fiber.Ctx) {
 		msg, ok := c.Locals(pubs.LocalsKey).(*pubs.Message)
 		if !ok {
@@ -47,15 +40,8 @@ func (h *Handler) Handle() func(*fiber.Ctx) {
 
 		ctx := context.Background()
 
-		// load clients
-		var err error
-		h.firestore, err = h.fb.FirestoreClient(ctx)
-		if err != nil {
-			c.Next(err)
-			return
-		}
-		h.pubsub, err = h.fb.PubSubClient(ctx, config.GCPProject)
-		if err != nil {
+		// initialize firestore in case not yet initialize
+		if err := h.google.InitFirestore(ctx); err != nil {
 			c.Next(err)
 			return
 		}

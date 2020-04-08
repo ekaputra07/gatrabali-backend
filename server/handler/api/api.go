@@ -1,30 +1,23 @@
 package api
 
 import (
-	"context"
 	"log"
 	"net/http"
 
-	"cloud.google.com/go/firestore"
 	"github.com/gofiber/fiber"
 
 	"server/common/constant"
-	"server/firebase"
+	"server/common/service"
 )
 
 // Handler represents the handler for APIs
 type Handler struct {
-	fb *firebase.Firebase
+	google *service.Google
 }
 
 // New returns Handler instance
-func New(fb *firebase.Firebase) *Handler {
-	return &Handler{fb: fb}
-}
-
-func (h *Handler) firestore(ctx context.Context) (f *firestore.Client, err error) {
-	f, err = h.fb.FirestoreClient(ctx)
-	return
+func New(google *service.Google) *Handler {
+	return &Handler{google}
 }
 
 // Routes is collection handler for API
