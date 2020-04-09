@@ -26,17 +26,17 @@ type user struct {
 type response struct {
 	google *service.Google
 
-	UserID          string `json:"user_id"`
-	Type            string `json:"type"`
-	EntryID         int64  `json:"entry_id"`
-	EntryCategoryID int64  `json:"entry_category_id"`
-	EntryFeedID     int64  `json:"entry_feed_id"`
-	ParentID        string `json:"parent_id"` // level 0 or level n
-	ThreadID        string `json:"thread_id"` // level 0
-	Reaction        string `json:"reaction"`
-	Comment         string `json:"comment"`
-	Entry           entry  `json:"entry"`
-	User            user   `json:"user"`
+	UserID          string      `json:"user_id"`
+	Type            string      `json:"type"`
+	EntryID         int64       `json:"entry_id"`
+	EntryCategoryID int64       `json:"entry_category_id"`
+	EntryFeedID     int64       `json:"entry_feed_id"`
+	ParentID        string      `json:"parent_id"` // level 0 or level n
+	ThreadID        string      `json:"thread_id"` // level 0
+	Reaction        string      `json:"reaction"`
+	Comment         string      `json:"comment"`
+	Entry           types.Entry `json:"entry"`
+	User            user        `json:"user"`
 }
 
 func (r *response) setGoogle(g *service.Google) *response {
