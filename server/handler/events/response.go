@@ -160,7 +160,7 @@ func (r *response) aggregateComment(ctx context.Context, incrementValue int) err
 func (r *response) notifyParentAuthor(ctx context.Context, parentAuthorID string) error {
 	payload := types.PushNotificationPayload{
 		UserID: parentAuthorID, // to user
-		Title:  fmt.Sprintf("%s membalas komentar anda", r.User.Name),
+		Title:  fmt.Sprintf("%s membalas komentar anda:", r.User.Name),
 		Body:   r.Comment,
 		Data: map[string]string{
 			"click_action": "FLUTTER_NOTIFICATION_CLICK",

@@ -85,8 +85,9 @@ func (h *Handler) Handle() func(*fiber.Ctx) {
 
 		// -- Android sepcific config
 		androidNotification := &messaging.AndroidNotification{
-			Icon:  "https://firebasestorage.googleapis.com/v0/b/gatrabali.appspot.com/o/app%2Fnotification.png?alt=media&token=b76afe54-fc9c-4a05-addb-3f9eaaee7d2f",
-			Color: "#4CB050",
+			Icon:     "https://firebasestorage.googleapis.com/v0/b/gatrabali.appspot.com/o/icon.png?alt=media&token=8cf3118e-8b90-465f-a36b-518223748e57",
+			ImageURL: "https://firebasestorage.googleapis.com/v0/b/gatrabali.appspot.com/o/icon.png?alt=media&token=8cf3118e-8b90-465f-a36b-518223748e57",
+			Color:    "#4CB050",
 		}
 		androidConfig := messaging.AndroidConfig{
 			Notification: androidNotification,
