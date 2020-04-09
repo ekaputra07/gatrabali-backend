@@ -42,7 +42,7 @@ func (h *Handler) notifySubscribers(ctx context.Context, pubsubData []byte) erro
 	var entryImage string
 	if data.Entry.Enclosures != nil {
 		for _, i := range *data.Entry.Enclosures {
-			if i.MimeType != "" {
+			if i.URL != "" {
 				entryImage = i.URL
 				break
 			}
@@ -111,6 +111,7 @@ func (h *Handler) notifySubscribers(ctx context.Context, pubsubData []byte) erro
 			continue
 		}
 
+		log.Printf("[pushData]: %+v", pushData)
 		j, err := json.Marshal(pushData)
 		if err != nil {
 			log.Println("Failed Marshalling push data:", err)
