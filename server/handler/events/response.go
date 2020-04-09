@@ -145,15 +145,9 @@ func (r *response) aggregateComment(ctx context.Context, incrementValue int) err
 			}
 
 			// notify parent comment author
-			if (incrementValue > 0) && (parent != nil) {
-				var parentResp response
-				err := parent.DataTo(&parentResp)
-				if err == nil && parentResp.UserID != r.UserID {
-					log.Printf("%+v\n", parent.Data())
-					log.Printf("%+v\n", parentResp)
-					if err := r.notifyParentAuthor(ctx, parentResp.UserID); err != nil {
-						log.Printf("[ERROR] %s\n", err)
-					}
+			if (incrementValue > 0) && (parent != nil) && (parent.Data()["user_id"].(string) != r.UserID) {
+				if err := r.notifyParentAuthor(ctx, parent.Data()["user_id"].(string)); err != nil {
+					log.Printf("[ERROR] %s\n", err)
 				}
 			}
 		}
