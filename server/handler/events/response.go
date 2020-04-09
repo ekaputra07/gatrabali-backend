@@ -149,6 +149,7 @@ func (r *response) aggregateComment(ctx context.Context, incrementValue int) err
 				var parentResp response
 				err := parent.DataTo(&parentResp)
 				if err == nil && parentResp.UserID != r.UserID {
+					log.Printf("%+v\n", parentResp)
 					if err := r.notifyParentAuthor(ctx, parentResp.UserID); err != nil {
 						log.Printf("[ERROR] %s\n", err)
 					}
