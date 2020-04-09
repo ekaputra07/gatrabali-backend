@@ -176,6 +176,7 @@ func (r *response) notifyParentAuthor(ctx context.Context, parentAuthorID string
 			"published_at": strconv.FormatInt(r.Entry.PublishedAt, 10),
 		},
 	}
+	log.Println(payload)
 	j, err := json.Marshal(payload)
 	if err != nil {
 		return err
