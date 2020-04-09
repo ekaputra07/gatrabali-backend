@@ -162,6 +162,7 @@ func (r *response) notifyParentAuthor(ctx context.Context, parentAuthorID string
 		UserID: parentAuthorID, // to user
 		Title:  fmt.Sprintf("%s membalas komentar anda:", r.User.Name),
 		Body:   r.Comment,
+		Image:  r.User.Avatar,
 		Data: map[string]string{
 			"click_action": "FLUTTER_NOTIFICATION_CLICK",
 			"data_type":    "response",
@@ -172,7 +173,6 @@ func (r *response) notifyParentAuthor(ctx context.Context, parentAuthorID string
 			"published_at": strconv.FormatInt(r.Entry.PublishedAt, 10),
 		},
 	}
-	log.Println(payload)
 	j, err := json.Marshal(payload)
 	if err != nil {
 		return err

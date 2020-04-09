@@ -12,6 +12,7 @@ type PushNotificationPayload struct {
 	UserID      string            `json:"user_id"`
 	Title       string            `json:"title"`
 	Body        string            `json:"body"`
+	Image       string            `json:"image,omitempty"`
 	CollapseKey string            `json:"collapse_key,omitempty"`
 	Data        map[string]string `json:"data,omitempty"`
 }

@@ -18,17 +18,9 @@ import (
 // this is based PubSub data formate sent by Firesub
 // https://github.com/ekaputra07/firesub
 type entryData struct {
-	ID        string `json:"id"`
-	Timestamp string `json:"timestamp"`
-	Entry     *entry `json:"data"`
-}
-
-type entry struct {
-	ID          int64  `json:"id"`
-	Title       string `json:"title"`
-	FeedID      int64  `json:"feed_id"`
-	CategoryID  int64  `json:"category_id"`
-	PublishedAt int64  `json:"published_at"`
+	ID        string       `json:"id"`
+	Timestamp string       `json:"timestamp"`
+	Entry     *types.Entry `json:"data"`
 }
 
 // notifySubscriber triggered when new entry written to Firestore,
@@ -46,6 +38,16 @@ func (h *Handler) notifySubscribers(ctx context.Context, pubsubData []byte) erro
 	categoryID := strconv.FormatInt(data.Entry.CategoryID, 10)
 	feedID := strconv.FormatInt(data.Entry.FeedID, 10)
 	publishedAt := strconv.FormatInt(data.Entry.PublishedAt, 10)
+	// get entry image
+	var entryImage string
+	if data.Entry.Enclosures != nil {
+		for _, i := range *data.Entry.Enclosures {
+			if i.MimeType != "" {
+				entryImage = i.URL
+				break
+			}
+		}
+	}
 
 	// overrides subscriberCategory if feedID belongs to BaleBengong
 	// for bale bengong subscriber they subscribes on a separate category called "balebengong"
@@ -70,6 +72,7 @@ func (h *Handler) notifySubscribers(ctx context.Context, pubsubData []byte) erro
 	pushData := types.PushNotificationPayload{
 		Title: category["title"].(string),
 		Body:  entryTitle,
+		Image: entryImage,
 		Data: map[string]string{
 			"click_action":   "FLUTTER_NOTIFICATION_CLICK",
 			"data_type":      "entry",
