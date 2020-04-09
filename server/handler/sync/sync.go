@@ -14,8 +14,18 @@ import (
 	"server/common/types"
 )
 
-// Handler sync data from Miniflux to Firestore
-func Handler(ctx context.Context, google *service.Google) func(*fiber.Ctx) {
+// Handler represents the data syncer from Miniflux to Firestore
+type Handler struct {
+	google *service.Google
+}
+
+// New returns an instance of Handler
+func New(google *service.Google) *Handler {
+	return &Handler{google}
+}
+
+// Handle handles the request
+func (h *Handler) Handle() func(*fiber.Ctx) {
 	return func(c *fiber.Ctx) {
 		msg, ok := c.Locals(pubsub.LocalsKey).(*pubsub.Message)
 		if !ok {
@@ -33,27 +43,27 @@ func Handler(ctx context.Context, google *service.Google) func(*fiber.Ctx) {
 			return
 		}
 
+		ctx := context.Background() // request ctx
+
 		// init Firestore client
-		if err := google.InitFirestore(ctx); err != nil {
+		if err := h.google.InitFirestore(ctx); err != nil {
 			c.Next(err)
 			return
 		}
 
-		ctx := context.Background() // request ctx
-
 		switch *payload.Type {
 		case constant.TypeCategory:
-			if err := storeCategories(ctx, google.Firestore, payload); err != nil {
+			if err := h.storeCategories(ctx, payload); err != nil {
 				c.Next(err)
 				return
 			}
 		case constant.TypeFeed:
-			if err := storeFeed(ctx, google.Firestore, payload); err != nil {
+			if err := h.storeFeed(ctx, payload); err != nil {
 				c.Next(err)
 				return
 			}
 		case constant.TypeEntry:
-			if err := storeEntry(ctx, google.Firestore, payload); err != nil {
+			if err := h.storeEntry(ctx, payload); err != nil {
 				c.Next(err)
 				return
 			}

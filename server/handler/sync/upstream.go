@@ -1,6 +1,7 @@
 package sync
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -14,9 +15,9 @@ import (
 var client = &http.Client{Timeout: time.Duration(5) * time.Second}
 
 // create a request object which includes Basic Authentication
-func createGetRequest(path string) (*http.Request, error) {
+func createGetRequest(ctx context.Context, path string) (*http.Request, error) {
 	url := config.MinifluxHost + path
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -25,8 +26,8 @@ func createGetRequest(path string) (*http.Request, error) {
 }
 
 // getCategories calls /v1/categories
-func getCategories() (*types.CategoryList, error) {
-	req, err := createGetRequest("/v1/categories")
+func getCategories(ctx context.Context) (*types.CategoryList, error) {
+	req, err := createGetRequest(ctx, "/v1/categories")
 	if err != nil {
 		return nil, err
 	}
@@ -47,8 +48,8 @@ func getCategories() (*types.CategoryList, error) {
 }
 
 // getFeedIcon calls /v1/feeds/:FeedID/icon
-func getFeedIcon(feedID int64) (*types.FeedIcon, error) {
-	req, err := createGetRequest(fmt.Sprintf("/v1/feeds/%v/icon", feedID))
+func getFeedIcon(ctx context.Context, feedID int64) (*types.FeedIcon, error) {
+	req, err := createGetRequest(ctx, fmt.Sprintf("/v1/feeds/%v/icon", feedID))
 	if err != nil {
 		return nil, err
 	}
@@ -69,8 +70,8 @@ func getFeedIcon(feedID int64) (*types.FeedIcon, error) {
 }
 
 // getFeed calls /v1/feeds/:ID
-func getFeed(id int64) (*types.Feed, error) {
-	req, err := createGetRequest(fmt.Sprintf("/v1/feeds/%v", id))
+func getFeed(ctx context.Context, id int64) (*types.Feed, error) {
+	req, err := createGetRequest(ctx, fmt.Sprintf("/v1/feeds/%v", id))
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +91,7 @@ func getFeed(id int64) (*types.Feed, error) {
 	feed := mFeed.ToFeed()
 
 	// get feed icon, if error return feed without icon
-	icon, err := getFeedIcon(id)
+	icon, err := getFeedIcon(ctx, id)
 	if err != nil {
 		return &feed, nil
 	}
@@ -99,8 +100,8 @@ func getFeed(id int64) (*types.Feed, error) {
 }
 
 // getEntry calls /v1/entries/:ID
-func getEntry(id int64) (*types.Entry, error) {
-	req, err := createGetRequest(fmt.Sprintf("/v1/entries/%v", id))
+func getEntry(ctx context.Context, id int64) (*types.Entry, error) {
+	req, err := createGetRequest(ctx, fmt.Sprintf("/v1/entries/%v", id))
 	if err != nil {
 		return nil, err
 	}

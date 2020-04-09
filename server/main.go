@@ -43,7 +43,7 @@ func main() {
 	}))
 
 	pubsub.Use(pubs.New(pubs.Config{Debug: false})) // pubsub middleware
-	pubsub.Post("/sync-data", sync.Handler(ctx, gcp))
+	pubsub.Post("/sync-data", sync.New(gcp).Handle())
 	pubsub.Post("/push-notification", push.New(gcp).Handle())
 	pubsub.Post("/firestore-events", events.New(gcp).Handle())
 	pubsub.Use(softErrorHandler()) // always return OK response to avoid PubSub retrying
