@@ -117,9 +117,9 @@ func (h *Handler) notifySubscribers(ctx context.Context, pubsubData []byte) erro
 		pubsubMsg := &pubsub.Message{Data: j}
 		serverID, err := h.google.PublishToTopic(ctx, config.PushNotificationTopic, pubsubMsg)
 		if err != nil {
-			log.Println("Publish to Push topic failed:", err)
+			log.Println("notifySubscribers(): publish to Push topic failed:", err)
 		} else {
-			log.Println("Publish to Push topic success:", serverID)
+			log.Println("notifySubscribers(): publish to Push topic success:", serverID)
 		}
 	}
 

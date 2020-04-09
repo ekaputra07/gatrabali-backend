@@ -2,14 +2,19 @@ package events
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 
 	"cloud.google.com/go/firestore"
+	"cloud.google.com/go/pubsub"
 
 	"server/common/constant"
 	"server/common/service"
+	"server/common/types"
+	"server/config"
 )
 
 type user struct {
@@ -139,16 +144,49 @@ func (r *response) aggregateComment(ctx context.Context, incrementValue int) err
 				}
 			}
 
-			// TODO: Notify parent author
-			// if failed should not failed the transaction.
-			if (incrementValue > 0) && (parent != nil) && (r.UserID != parent.Data()["user_id"].(string)) {
-				fmt.Println("TODO: send push!")
+			// notify parent comment author
+			if (incrementValue > 0) && (parent != nil) {
+				var parentResp response
+				err := parent.DataTo(&parentResp)
+				if err == nil && parentResp.UserID != r.UserID {
+					if err := r.notifyParentAuthor(ctx, parentResp.UserID); err != nil {
+						log.Printf("[ERROR] %s\n", err)
+					}
+				}
 			}
 		}
 
 		// -- transaction end
 		return nil
 	})
+}
+
+func (r *response) notifyParentAuthor(ctx context.Context, parentAuthorID string) error {
+	payload := types.PushNotificationPayload{
+		UserID: parentAuthorID, // to user
+		Title:  fmt.Sprintf("%s membalas komentar anda", r.User.Name),
+		Body:   r.Comment,
+		Data: map[string]string{
+			"click_action": "FLUTTER_NOTIFICATION_CLICK",
+			"data_type":    "response",
+			"entry_title":  r.Entry.Title,
+			"entry_id":     strconv.FormatInt(r.Entry.ID, 10),
+			"category_id":  strconv.FormatInt(r.Entry.CategoryID, 10),
+			"feed_id":      strconv.FormatInt(r.Entry.FeedID, 10),
+			"published_at": strconv.FormatInt(r.Entry.PublishedAt, 10),
+		},
+	}
+	j, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	serverID, err := r.google.PublishToTopic(ctx, config.PushNotificationTopic, &pubsub.Message{Data: j})
+	if err != nil {
+		log.Println("notifyParentAuthor(): publish to Push topic failed:", err)
+	} else {
+		log.Println("notifyParentAuthor(): publish to Push topic success:", serverID)
+	}
+	return err
 }
 
 // -- reaction aggregation
@@ -167,45 +205,4 @@ func (r *response) aggregateReactionCreateDelete(ctx context.Context, incrementV
 		Update(ctx, update)
 
 	return err
-}
-
-func aggregateReactionUpdate(ctx context.Context, before, after *response) error {
-	entryID := strconv.FormatInt(after.EntryID, 10)
-	categoryID := after.EntryCategoryID
-	newReaction := after.Reaction
-	oldReaction := before.Reaction
-
-	if newReaction == oldReaction {
-		return nil
-	}
-
-	update := []firestore.Update{
-		{
-			Path:  fmt.Sprintf("reaction_%s_count", strings.ToLower(oldReaction)),
-			Value: firestore.Increment(-1),
-		},
-		{
-			Path:  fmt.Sprintf("reaction_%s_count", strings.ToLower(newReaction)),
-			Value: firestore.Increment(1),
-		},
-	}
-	_, err := after.google.Firestore.
-		Collection(entryCollectionByCategory(categoryID)).
-		Doc(entryID).
-		Update(ctx, update)
-
-	return err
-}
-
-// entryCollectionByCategory method is specific to BaliFeed app only
-func entryCollectionByCategory(categoryID int64) string {
-	c := constant.Entries
-	if categoryID == 11 {
-		c = constant.Kriminal
-	} else if categoryID == 12 {
-		c = constant.BaliUnited
-	} else if categoryID > 12 {
-		c = constant.BaleBengong
-	}
-	return c
 }
