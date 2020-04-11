@@ -111,7 +111,6 @@ func (h *Handler) notifySubscribers(ctx context.Context, pubsubData []byte) erro
 			continue
 		}
 
-		log.Printf("[pushData]: %+v", pushData)
 		j, err := json.Marshal(pushData)
 		if err != nil {
 			log.Println("Failed Marshalling push data:", err)
@@ -119,11 +118,8 @@ func (h *Handler) notifySubscribers(ctx context.Context, pubsubData []byte) erro
 		}
 
 		pubsubMsg := &pubsub.Message{Data: j}
-		serverID, err := h.google.PublishToTopic(ctx, config.PushNotificationTopic, pubsubMsg)
-		if err != nil {
+		if _, err = h.google.PublishToTopic(ctx, config.PushNotificationTopic, pubsubMsg); err != nil {
 			log.Println("notifySubscribers(): publish to Push topic failed:", err)
-		} else {
-			log.Println("notifySubscribers(): publish to Push topic success:", serverID)
 		}
 	}
 

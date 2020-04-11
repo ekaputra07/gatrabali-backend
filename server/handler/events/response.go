@@ -177,11 +177,9 @@ func (r *response) notifyParentAuthor(ctx context.Context, parentAuthorID string
 	if err != nil {
 		return err
 	}
-	serverID, err := r.google.PublishToTopic(ctx, config.PushNotificationTopic, &pubsub.Message{Data: j})
+	_, err = r.google.PublishToTopic(ctx, config.PushNotificationTopic, &pubsub.Message{Data: j})
 	if err != nil {
 		log.Println("notifyParentAuthor(): publish to Push topic failed:", err)
-	} else {
-		log.Println("notifyParentAuthor(): publish to Push topic success:", serverID)
 	}
 	return err
 }

@@ -106,13 +106,10 @@ func (h *Handler) Handle() func(*fiber.Ctx) {
 				Android:      &androidConfig,
 			}
 
-			resp, err := h.google.Messaging.Send(ctx, message)
-			if err != nil {
+			if _, err := h.google.Messaging.Send(ctx, message); err != nil {
 				// if error, delete token
 				log.Println("Notification not sent:", err)
 				delete(tokensMap, token)
-			} else {
-				log.Println("Notification sent:", resp)
 			}
 		}
 
